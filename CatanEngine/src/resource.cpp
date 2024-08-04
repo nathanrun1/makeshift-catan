@@ -10,6 +10,5 @@ std::string RscToString(Resource rsc) {
 		case Resource::Ore: return "Ore";
 		case Resource::Desert: return "Desert";
 	default: return "UNKNOWN";
-}
-
+	}
 }
