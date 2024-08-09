@@ -1,6 +1,8 @@
 #include "resource.h"
 #include <string>
 
+const std::vector<Resource> RESOURCES = { Resource::Wool, Resource::Grain, Resource::Lumber, Resource::Brick, Resource::Ore };
+
 std::string RscToString(Resource rsc) {
 	switch (rsc) {
 		case Resource::Wool: return "Wool";

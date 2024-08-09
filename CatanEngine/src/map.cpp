@@ -1,15 +1,10 @@
 #include <iostream>
-#include <vector>
-#include <utility>
-#include <optional>
-#include <assert.h>
 #include <random>
 #include <algorithm>
-#include "resource.h"
 #include "map.h"
 
 
-const std::vector<Resource> RESOURCES = {
+const std::vector<Resource> MAP_RESOURCES = {
 	Resource::Ore, Resource::Ore, Resource::Ore,
 	Resource::Wool, Resource::Wool, Resource::Wool, Resource::Wool,
 	Resource::Grain, Resource::Grain, Resource::Grain, Resource::Grain,
@@ -26,7 +21,7 @@ const std::vector<int> DICE_NUMBERS = {
 void Map::GenerateHexes(int top_row_len, int mid_row_len) {
 	assert(top_row_len >= 1);
 	assert(mid_row_len >= top_row_len);
-	std::vector<Resource> resources = RESOURCES;
+	std::vector<Resource> resources = MAP_RESOURCES;
 	std::vector<int> dice_numbers = DICE_NUMBERS;
 	std::random_device rd;
 	std::mt19937 g1(rd());
@@ -46,6 +41,7 @@ void Map::GenerateHexes(int top_row_len, int mid_row_len) {
 		for (int col = 0; col < cur_row_len; ++col) {
 			if (*rsc == Resource::Desert) {
 				new_row.push_back(Hex(7, *rsc));
+				robber_pos = { row, col };
 			} else {
 				new_row.push_back(Hex(*dice_num, *rsc));
 				++dice_num;
@@ -66,22 +62,32 @@ void Map::GenerateHexes(int top_row_len, int mid_row_len) {
 void Map::GenerateNodes(int top_row_len, int mid_row_len) {
 	assert(top_row_len >= 1);
 	assert(mid_row_len >= top_row_len);
+	assert(hex_grid.size() > 0);
+	int row = 0;
 	for (int cur_row_len = top_row_len; cur_row_len <= mid_row_len; ++cur_row_len) {
 		std::vector<std::optional<Node>> new_row;
-		for (int n = 0; n < cur_row_len * 2 + 1; ++n) {
-			new_row.push_back(Node());
+		for (int col = 0; col < cur_row_len * 2 + 1; ++col) {
+			Node new_node;
+			new_node.adj_hexes = Map::GetNodeHexes(row, col); // error is here
+			new_row.push_back(new_node);
 		}
 		node_grid.push_back(new_row);
+		row++;
 	}
 	for (int cur_row_len = mid_row_len; cur_row_len >= top_row_len; --cur_row_len) {
 		std::vector<std::optional<Node>> new_row;
-		for (int i = 0; i < (mid_row_len - cur_row_len) * 2 + 1; ++i) {
+		int col = 0;
+		for (; col < (mid_row_len - cur_row_len) * 2 + 1; ++col) {
 			new_row.push_back(std::nullopt);
 		}
-		for (int n = 0; n < cur_row_len * 2 + 1; ++n) {
-			new_row.push_back(Node());
+		for (; col < mid_row_len * 2 + 2; ++col) {
+			Node new_node;
+			// std::cout << "[INFO]: Calling GetNodeHexes(" << row << ", " << col << ");" << '\n';
+			new_node.adj_hexes = Map::GetNodeHexes(row, col);
+			new_row.push_back(new_node);
 		}
 		node_grid.push_back(new_row);
+		row++;
 	}
 }
 
@@ -92,34 +98,33 @@ void Map::Generate(int top_row_len, int mid_row_len) {
 
 // See map.h for documentation
 std::vector<Hex*> Map::GetNodeHexes(int row, int col) {
-	assert(row >= 0 && row < node_grid.size());
-	assert(col >= 0 && col < node_grid[row].size());
+	assert(row >= 0);
+	assert(col >= 0);
 	std::vector<Hex*> hexes;
 	if (col % 2 == 0) {
 		if (row < hex_grid.size()) {
-			if (col / 2 - 1 >= 0 && col / 2 - 1 < hex_grid[row].size()) {
+			if (col / 2 - 1 >= 0 && col / 2 - 1 < hex_grid[row].size() && hex_grid[row][col / 2 - 1]) {
 				hexes.push_back(&(*hex_grid[row][col / 2 - 1]));
 			}
-			if (col / 2 >= 0 && col / 2 < hex_grid[row].size()) {
+			if (col / 2 >= 0 && col / 2 < hex_grid[row].size() && hex_grid[row][col / 2]) {
 				hexes.push_back(&(*hex_grid[row][col / 2]));
 			}
 		}
-		if (row - 1 >= 0 && row - 1 < hex_grid.size() && col / 2 - 1 >= 0 && col / 2 - 1 < hex_grid[row - 1].size()) {
+		if (row - 1 >= 0 && row - 1 < hex_grid.size() && col / 2 - 1 >= 0 && col / 2 - 1 < hex_grid[row - 1].size() && hex_grid[row - 1][col / 2 - 1]) {
 
 			hexes.push_back(&(*hex_grid[row - 1][col / 2 - 1]));
 		}
 	}
 	else {
 		if (row - 1 >= 0 && row - 1 < hex_grid.size()) {
-			if (col / 2 - 1 >= 0 && col / 2 - 1 < hex_grid[row - 1].size()) {
+			if (col / 2 - 1 >= 0 && col / 2 - 1 < hex_grid[row - 1].size() && hex_grid[row - 1][col / 2 - 1]) {
 				hexes.push_back(&(*hex_grid[row - 1][col / 2 - 1]));
 			}
-			if (col / 2 >= 0 && col / 2 < hex_grid[row - 1].size()) {
+			if (col / 2 >= 0 && col / 2 < hex_grid[row - 1].size() && hex_grid[row - 1][col / 2]) {
 				hexes.push_back(&(*hex_grid[row - 1][col / 2]));
 			}
 		}
-		if (row < hex_grid.size() && col / 2 >= 0 && col / 2 < hex_grid[row].size()) {
-
+		if (row < hex_grid.size() && col / 2 >= 0 && col / 2 < hex_grid[row].size() && hex_grid[row][col / 2]) {
 			hexes.push_back(&(*hex_grid[row][col / 2]));
 		}
 	}

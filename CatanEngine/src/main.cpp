@@ -1,5 +1,5 @@
 #include <iostream>
-#include "map.h"
+#include "game.h"
 
 // Progress:
 // Map is able to generate grid of hexes and grid of nodes (spots where settlements go)
@@ -9,14 +9,26 @@
 // Have to figure out how game will interact with map, and then adjust this accordingly, possibly
 //   adding a position value to Nodes and Hexes themselves for easy checks
 
-
 int main() {
-	std::cout << "Hello Catan!" << std::endl;
+	/*std::cout << "Hello Catan!" << std::endl;
 	Map map;
 	map.PrintHexes();
-	std::vector<Hex*> my_hexes = map.GetNodeHexes(1, 1);
+	std::vector<Hex*> my_hexes = map.node_grid[1][3]->adj_hexes;
 	for (Hex* hex : my_hexes) {
 		std::cout << RscToString(hex->resource) << " " << hex->dice_num << "; ";
 	}
 	std::cout << std::endl;
+	std::cin.get();*/
+
+	/*Request request(Resource::Wool, 4);
+	Bank bank;
+	std::cout << bank.RequestResource(request);
+	std::cout << bank.RequestResource(request);
+	std::cout << bank.RequestResource(request);
+	std::cout << bank.RequestResource(request);
+	std::cout << static_cast<std::string>(bank);*/
+
+	Game game;
+	std::cout << game.DiceRoll() << "\n";
+	Player plr("Nathan");
 }
