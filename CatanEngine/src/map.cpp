@@ -3,6 +3,13 @@
 #include <algorithm>
 #include "map.h"
 
+Map::Map() {
+	Generate(3, 5);
+}
+
+Map::Map(int top_row_len, int mid_row_len) {
+	Generate(top_row_len, mid_row_len);
+}
 
 const std::vector<Resource> MAP_RESOURCES = {
 	Resource::Ore, Resource::Ore, Resource::Ore,
@@ -17,7 +24,6 @@ const std::vector<int> DICE_NUMBERS = {
 	2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12
 };
 
-// See map.h for documentation
 void Map::GenerateHexes(int top_row_len, int mid_row_len) {
 	assert(top_row_len >= 1);
 	assert(mid_row_len >= top_row_len);
@@ -40,10 +46,10 @@ void Map::GenerateHexes(int top_row_len, int mid_row_len) {
 		}
 		for (int col = 0; col < cur_row_len; ++col) {
 			if (*rsc == Resource::Desert) {
-				new_row.push_back(Hex(7, *rsc));
+				new_row.push_back(Hex(std::pair<int, int>(row, col), 7, *rsc));
 				robber_pos = { row, col };
 			} else {
-				new_row.push_back(Hex(*dice_num, *rsc));
+				new_row.push_back(Hex(std::pair<int, int>(row, col), *dice_num, *rsc));
 				++dice_num;
 			}
 			++rsc;
@@ -58,7 +64,6 @@ void Map::GenerateHexes(int top_row_len, int mid_row_len) {
 	}
 }
 
-// See map.h for documentation
 void Map::GenerateNodes(int top_row_len, int mid_row_len) {
 	assert(top_row_len >= 1);
 	assert(mid_row_len >= top_row_len);
@@ -67,7 +72,7 @@ void Map::GenerateNodes(int top_row_len, int mid_row_len) {
 	for (int cur_row_len = top_row_len; cur_row_len <= mid_row_len; ++cur_row_len) {
 		std::vector<std::optional<Node>> new_row;
 		for (int col = 0; col < cur_row_len * 2 + 1; ++col) {
-			Node new_node;
+			Node new_node(std::pair<int, int>(row, col));
 			new_node.adj_hexes = Map::GetNodeHexes(row, col); // error is here
 			new_row.push_back(new_node);
 		}
@@ -81,7 +86,7 @@ void Map::GenerateNodes(int top_row_len, int mid_row_len) {
 			new_row.push_back(std::nullopt);
 		}
 		for (; col < mid_row_len * 2 + 2; ++col) {
-			Node new_node;
+			Node new_node(std::pair<int, int>(row, col));
 			// std::cout << "[INFO]: Calling GetNodeHexes(" << row << ", " << col << ");" << '\n';
 			new_node.adj_hexes = Map::GetNodeHexes(row, col);
 			new_row.push_back(new_node);
@@ -96,7 +101,6 @@ void Map::Generate(int top_row_len, int mid_row_len) {
 	Map::GenerateNodes(top_row_len, mid_row_len);
 }
 
-// See map.h for documentation
 std::vector<Hex*> Map::GetNodeHexes(int row, int col) {
 	assert(row >= 0);
 	assert(col >= 0);
@@ -131,7 +135,6 @@ std::vector<Hex*> Map::GetNodeHexes(int row, int col) {
 	return hexes;
 }
 
-// See map.h for documentation
 std::vector<Node*> Map::GetHexNodes(int row, int col) {
 	assert(row >= 0 && row < hex_grid.size());
 	assert(col >= 0 && col < hex_grid[row].size());
@@ -146,7 +149,6 @@ std::vector<Node*> Map::GetHexNodes(int row, int col) {
 }
 
 
-// See map.h for documentation
 void Map::PrintHexes() {
 	int offset = 12;
 	for (std::vector<std::optional<Hex>>& row : hex_grid) {
@@ -170,7 +172,6 @@ void Map::PrintHexes() {
 	}
 }
 
-// See map.h for documentation
 void Map::PrintNodes() {
 	for (std::vector<std::optional<Node>>& row : node_grid) {
 		for (std::optional<Node>& opt : row) {
@@ -183,4 +184,15 @@ void Map::PrintNodes() {
 		}
 		std::cout << '\n';
 	}
+}
+
+std::vector<std::pair<Resource, int>> Map::GetResources(Occupation& occ) {
+	std::vector<Hex*> adj_hexes = GetNodeHexes(occ.node.pos.first, occ.node.pos.second);
+	std::vector<std::pair<Resource, int>> resources;
+	for (Hex* hex : adj_hexes) {
+		if (hex->pos != robber_pos) {
+			resources.push_back(std::pair<Resource, int>(hex->resource, hex->dice_num));
+		}
+	}
+	return resources;
 }

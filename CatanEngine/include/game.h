@@ -4,6 +4,7 @@
 #include <iostream>
 #include "map.h"
 #include "player.h"
+#include "bank.h"
 
 class Player;
 
@@ -29,13 +30,14 @@ private:
 	void PlayerTurn(Player& player);
 
 	/// <summary>
-	/// Declares player as winner. Called when game is over.
+	/// Declares player as winner and that the game is over.
 	/// </summary>
-	/// <param name="player">- The player who won</param>
+	/// <param name="player">- Player that will be declared as winner</param>
 	void Win(Player& player);
 public:
 	std::vector<Player> players;
 	Map map;
+	Bank bank;
 
 	const int vp_to_win;
 

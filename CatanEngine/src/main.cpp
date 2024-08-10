@@ -28,7 +28,15 @@ int main() {
 	std::cout << bank.RequestResource(request);
 	std::cout << static_cast<std::string>(bank);*/
 
-	Game game;
+	/*Game game;
 	std::cout << game.DiceRoll() << "\n";
-	Player plr("Nathan");
+	Player plr("Nathan");*/
+
+	Map map;
+	map.PrintHexes();
+	map.node_grid[2][4]->occ.emplace(*map.node_grid[2][4]);
+	std::vector<std::pair<Resource, int>> resources = map.GetResources(*map.node_grid[2][4]->occ);
+	for (std::pair<Resource, int>& rsc_pair : resources) {
+		std::cout << RscToString(rsc_pair.first) << " | " << rsc_pair.second << ";" << std::endl;
+	}
 }

@@ -95,6 +95,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PreprocessToFile>false</PreprocessToFile>
       <PreprocessKeepComments>false</PreprocessKeepComments>
+      <AdditionalIncludeDirectories>$(ProjectDir)include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,6 +130,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PreprocessToFile>false</PreprocessToFile>
       <PreprocessKeepComments>false</PreprocessKeepComments>
+      <AdditionalIncludeDirectories>$(ProjectDir)include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -157,17 +159,21 @@
   <ItemGroup>
     <ClCompile Include="src\bank.cpp" />
     <ClCompile Include="src\game.cpp" />
+    <ClCompile Include="src\occupation.cpp" />
     <ClCompile Include="src\player.cpp" />
     <ClCompile Include="src\resource.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\map.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\game.h" />
-    <ClInclude Include="src\player.h" />
-    <ClInclude Include="src\bank.h" />
-    <ClInclude Include="src\map.h" />
-    <ClInclude Include="src\resource.h" />
+    <ClInclude Include="include\buildings.h" />
+    <ClInclude Include="include\game.h" />
+    <ClInclude Include="include\mapcomponents.h" />
+    <ClInclude Include="include\occupation.h" />
+    <ClInclude Include="include\player.h" />
+    <ClInclude Include="include\bank.h" />
+    <ClInclude Include="include\map.h" />
+    <ClInclude Include="include\resource.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

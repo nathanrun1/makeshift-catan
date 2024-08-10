@@ -33,21 +33,33 @@
     <ClCompile Include="src\game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\occupation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\map.h">
+    <ClInclude Include="include\map.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\resource.h">
+    <ClInclude Include="include\resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\bank.h">
+    <ClInclude Include="include\bank.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\player.h">
+    <ClInclude Include="include\player.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\game.h">
+    <ClInclude Include="include\game.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\occupation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\buildings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mapcomponents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
