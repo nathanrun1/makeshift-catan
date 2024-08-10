@@ -49,16 +49,6 @@ private:
 	/// <param name="top_row_len">- Length of top and bottom row of map</param>
 	/// <param name="mid_row_len">- Length of center row of map</param>
 	void Generate(int top_row_len, int mid_row_len);
-public:
-	/// <summary>
-	/// Prints a representation of map.hex_grid to console
-	/// </summary>
-	void PrintHexes();
-
-	/// <summary>
-	/// Prints a representation of map.node_grid to console
-	/// </summary>
-	void PrintNodes();
 
 	/// <summary>
 	/// Produces a vector of pointers to all adjacent hexes to the Node located at (row, col) in map.node_grid
@@ -75,8 +65,30 @@ public:
 	/// <param name="col">- Hex's column</param>
 	/// <returns></returns>
 	std::vector<Node*> GetHexNodes(int row, int col);
+public:
+	/// <summary>
+	/// Prints a representation of map.hex_grid to console
+	/// </summary>
+	void PrintHexes();
 
+	/// <summary>
+	/// Prints a representation of map.node_grid to console
+	/// </summary>
+	void PrintNodes();
+
+	/// <summary>
+	/// Returns a list of available resources to an Occupation.
+	/// </summary>
+	/// <param name="occ">- Occupation being checked</param>
+	/// <returns></returns>
 	std::vector<std::pair<Resource, int>> GetResources(Occupation& occ);
+
+	/// <summary>
+	/// Attempt to place robber at given position. 
+	/// </summary>
+	/// <param name="pos">- Position of hex on which to place robber</param>
+	/// <returns>true if successful, false if not</returns>
+	bool PlaceRobber(std::pair<int, int> pos);
 
 	/// <summary>
 	/// Constructs a Map instance. Generates a random map.

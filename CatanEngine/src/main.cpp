@@ -35,8 +35,12 @@ int main() {
 	Map map;
 	map.PrintHexes();
 	map.node_grid[2][4]->occ.emplace(*map.node_grid[2][4]);
+	map.PlaceRobber(std::pair<int, int>(2, 2));
+	std::cout << map.robber_pos.first << " " << map.robber_pos.second << std::endl;
 	std::vector<std::pair<Resource, int>> resources = map.GetResources(*map.node_grid[2][4]->occ);
+	std::cout << RscToString(map.hex_grid[2][2]->resource) << std::endl;
 	for (std::pair<Resource, int>& rsc_pair : resources) {
 		std::cout << RscToString(rsc_pair.first) << " | " << rsc_pair.second << ";" << std::endl;
 	}
+	std::cin.get();
 }

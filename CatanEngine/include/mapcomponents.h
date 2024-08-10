@@ -12,7 +12,7 @@ public:
 	std::pair<int, int> pos;
 
 	Hex(std::pair<int, int> pos, int dice_num, Resource resource)
-		: dice_num(dice_num), resource(resource) {}
+		: pos(pos), dice_num(dice_num), resource(resource) {}
 };
 
 class Node {

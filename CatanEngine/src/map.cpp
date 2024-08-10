@@ -3,6 +3,8 @@
 #include <algorithm>
 #include "map.h"
 
+#define LOG(x) std::cout << x << std::endl
+
 Map::Map() {
 	Generate(3, 5);
 }
@@ -49,6 +51,7 @@ void Map::GenerateHexes(int top_row_len, int mid_row_len) {
 				new_row.push_back(Hex(std::pair<int, int>(row, col), 7, *rsc));
 				robber_pos = { row, col };
 			} else {
+
 				new_row.push_back(Hex(std::pair<int, int>(row, col), *dice_num, *rsc));
 				++dice_num;
 			}
@@ -73,7 +76,7 @@ void Map::GenerateNodes(int top_row_len, int mid_row_len) {
 		std::vector<std::optional<Node>> new_row;
 		for (int col = 0; col < cur_row_len * 2 + 1; ++col) {
 			Node new_node(std::pair<int, int>(row, col));
-			new_node.adj_hexes = Map::GetNodeHexes(row, col); // error is here
+			new_node.adj_hexes = Map::GetNodeHexes(row, col); 
 			new_row.push_back(new_node);
 		}
 		node_grid.push_back(new_row);
@@ -87,7 +90,6 @@ void Map::GenerateNodes(int top_row_len, int mid_row_len) {
 		}
 		for (; col < mid_row_len * 2 + 2; ++col) {
 			Node new_node(std::pair<int, int>(row, col));
-			// std::cout << "[INFO]: Calling GetNodeHexes(" << row << ", " << col << ");" << '\n';
 			new_node.adj_hexes = Map::GetNodeHexes(row, col);
 			new_row.push_back(new_node);
 		}
@@ -187,12 +189,22 @@ void Map::PrintNodes() {
 }
 
 std::vector<std::pair<Resource, int>> Map::GetResources(Occupation& occ) {
-	std::vector<Hex*> adj_hexes = GetNodeHexes(occ.node.pos.first, occ.node.pos.second);
 	std::vector<std::pair<Resource, int>> resources;
-	for (Hex* hex : adj_hexes) {
-		if (hex->pos != robber_pos) {
+	for (Hex* hex : occ.node.adj_hexes) {
+		if (hex->pos != robber_pos && hex->resource != Resource::Desert) {
 			resources.push_back(std::pair<Resource, int>(hex->resource, hex->dice_num));
 		}
 	}
 	return resources;
+}
+
+bool Map::PlaceRobber(std::pair<int, int> pos) {
+	assert(pos.first > 0);
+	assert(pos.second > 0);
+	if (robber_pos != pos && pos.first > 0 && pos.first < hex_grid.size() 
+		&& pos.second > 0 && pos.second << hex_grid[pos.first].size() && hex_grid[pos.first][pos.second]) {
+		robber_pos = pos;
+		return true;
+	}
+	return false;
 }
