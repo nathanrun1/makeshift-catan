@@ -17,10 +17,10 @@ public:
 
 class Node {
 public:
-	std::optional<Occupation> occ;
+	std::shared_ptr<Occupation> occ;
 	std::vector<Hex*> adj_hexes;
 	std::vector<std::pair<Node*, Player*>> roads;
 	std::pair<int, int> pos;
 
-	Node(std::pair<int, int> pos) : pos(pos), occ(std::nullopt) {}
+	Node(std::pair<int, int> pos) : pos(pos), occ(nullptr) {}
 };

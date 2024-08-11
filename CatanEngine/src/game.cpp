@@ -10,7 +10,7 @@ int Game::DiceRoll() {
 
 void Game::GetPlayers() {
 	for (int i = 0; i < 4; ++i) {
-		players.push_back(Player("Player" + std::to_string(i + 1)));
+		players.push_back(Player(i, "Player" + std::to_string(i + 1)));
 	}
 }
 

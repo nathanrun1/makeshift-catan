@@ -1,21 +1,19 @@
 #pragma once
 
-#include "occupation.h"
-#include "player.h"
 #include "mapcomponents.h"
 
-class Settlement : Occupation {
+class Settlement : public Occupation {
 public:
-	int victory_points = 1;
-	int production = 1;
-	Player& player;
-	Settlement(Player& player, Node& node) : player(player), Occupation(node) {}
+	const int victory_points = 1;
+	const int production = 1;
+
+	Settlement(Player* player, Node* node) : Occupation(player, node) {}
 };
 
-class City : Settlement {
+class City : public Occupation {
 public:
-	int victory_points = 2;
-	int production = 2;
+	const int victory_points = 2;
+	const int production = 2;
 
-	City(Player& player, Node& node) : Settlement(player, node) {}
+	City(Player* player, Node* node) : Occupation(player, node) {}
 };

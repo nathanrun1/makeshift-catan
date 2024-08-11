@@ -1,10 +1,15 @@
 #pragma once
 
+#include "player.h"
+
 class Node;
 
 class Occupation {
 public:
-	Node& node;
+	virtual ~Occupation() = default;
 
-	Occupation(Node& node) : node(node) {}
+	const Node* node;
+	const Player* player;
+
+	Occupation(Player* player, Node* node) : player(player), node(node) {}
 };

@@ -150,6 +150,37 @@ std::vector<Node*> Map::GetHexNodes(int row, int col) {
 	return nodes;
 }
 
+std::vector<Node*> Map::GetAdjNodes(std::pair<int, int> node_pos) {
+	int row = node_pos.first;
+	int col = node_pos.second;
+	std::vector<Node*> adj_nodes;
+	if (col % 2 == 0) {
+		if (row + 1 >= 0 && row + 1 < node_grid.size() 
+			&& col + 1 >= 0 && col + 1 < node_grid[row + 1].size() 
+			&& node_grid[row + 1][col + 1]) {
+			adj_nodes.push_back(&node_grid[row + 1][col + 1].value());
+		}
+	}
+	else {
+		if (row - 1 >= 0 && row - 1 < node_grid.size()
+			&& col - 1 >= 0 && col - 1 < node_grid[row - 1].size()
+			&& node_grid[row - 1][col - 1]) {
+			adj_nodes.push_back(&node_grid[row - 1][col - 1].value());
+		}
+	}
+	if (row >= 0 && row < node_grid.size()
+		&& col - 1 >= 0 && col - 1 < node_grid[row].size()
+		&& node_grid[row][col - 1]) {
+		adj_nodes.push_back(&node_grid[row][col - 1].value());
+	}
+	if (row >= 0 && row < node_grid.size()
+		&& col + 1 >= 0 && col + 1 < node_grid[row].size()
+		&& node_grid[row][col + 1]) {
+		adj_nodes.push_back(&node_grid[row][col + 1].value());
+	}
+	return adj_nodes;
+}
+
 
 void Map::PrintHexes() {
 	int offset = 12;
@@ -190,7 +221,7 @@ void Map::PrintNodes() {
 
 std::vector<std::pair<Resource, int>> Map::GetResources(Occupation& occ) {
 	std::vector<std::pair<Resource, int>> resources;
-	for (Hex* hex : occ.node.adj_hexes) {
+	for (Hex* hex : (*occ.node).adj_hexes) {
 		if (hex->pos != robber_pos && hex->resource != Resource::Desert) {
 			resources.push_back(std::pair<Resource, int>(hex->resource, hex->dice_num));
 		}
@@ -199,12 +230,49 @@ std::vector<std::pair<Resource, int>> Map::GetResources(Occupation& occ) {
 }
 
 bool Map::PlaceRobber(std::pair<int, int> pos) {
-	assert(pos.first > 0);
-	assert(pos.second > 0);
-	if (robber_pos != pos && pos.first > 0 && pos.first < hex_grid.size() 
-		&& pos.second > 0 && pos.second << hex_grid[pos.first].size() && hex_grid[pos.first][pos.second]) {
+	assert(pos.first >= 0);
+	assert(pos.second >= 0);
+	if (robber_pos != pos && pos.first >= 0 && pos.first < hex_grid.size() 
+		&& pos.second >= 0 && pos.second << hex_grid[pos.first].size() && hex_grid[pos.first][pos.second]) {
 		robber_pos = pos;
 		return true;
 	}
 	return false;
+}
+
+bool Map::PlaceOcc(std::shared_ptr<Occupation> occ, bool needs_road) {
+	// Make sure node_grid[pos] doesn't have occupation yet
+	// If needs_road, make sure that node_grid[pos] has a road placed by occ->player
+	// Make sure no adjacent nodes have an occupation
+	Node& node = node_grid[(*occ->node).pos.first][(*occ->node).pos.second].value();
+	if (node.occ) {
+		return false;
+	}
+	std::vector<Node*> adj_nodes = GetAdjNodes(node.pos);
+	for (Node* adj_node : adj_nodes) {
+		if (adj_node->occ) {
+			return false;
+		}
+	}
+	if (needs_road) {
+		bool has_road = false;
+		if (roads.find(&node) == roads.end()) {
+			return false;
+		}
+		for (std::pair<Node*, Player*>& road : roads.at(&node)) {
+			if (*(road.second) == *occ->player) {
+				has_road = true;
+				break;
+			}
+		}
+		if (!has_road) {
+			return false;
+		}
+	}
+	node.occ = occ;
+	return true;
+}
+
+bool Map::ReplaceOcc(Occupation& occ) {
+	return true;
 }

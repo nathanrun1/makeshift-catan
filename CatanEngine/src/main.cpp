@@ -1,5 +1,7 @@
 #include <iostream>
+#include <memory>
 #include "game.h"
+#include "buildings.h"
 
 // Progress:
 // Map is able to generate grid of hexes and grid of nodes (spots where settlements go)
@@ -34,10 +36,17 @@ int main() {
 
 	Map map;
 	map.PrintHexes();
-	map.node_grid[2][4]->occ.emplace(*map.node_grid[2][4]);
+	Player plr(0, "Nathan");
+	std::shared_ptr<Settlement> my_settlement = std::make_shared<Settlement>(&plr, &map.node_grid[2][4].value());
+	map.PlaceOcc(my_settlement, false);
 	map.PlaceRobber(std::pair<int, int>(2, 2));
 	std::cout << map.robber_pos.first << " " << map.robber_pos.second << std::endl;
-	std::vector<std::pair<Resource, int>> resources = map.GetResources(*map.node_grid[2][4]->occ);
+	std::vector<std::pair<Resource, int>> resources = map.GetResources(*my_settlement);
+
+	std::shared_ptr<Settlement> settlement_again = std::dynamic_pointer_cast<Settlement>(map.node_grid[2][4].value().occ);
+	std::cout << settlement_again->production << std::endl;
+
+
 	std::cout << RscToString(map.hex_grid[2][2]->resource) << std::endl;
 	for (std::pair<Resource, int>& rsc_pair : resources) {
 		std::cout << RscToString(rsc_pair.first) << " | " << rsc_pair.second << ";" << std::endl;

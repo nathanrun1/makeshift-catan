@@ -24,6 +24,7 @@ class Map {
 public:
 	std::vector<std::vector<std::optional<Hex>>> hex_grid;
 	std::vector<std::vector<std::optional<Node>>> node_grid;
+	std::unordered_map<Node*, std::vector<std::pair<Node*, Player*>>> roads;
 	std::pair<int, int> robber_pos;
 private:
 	/// <summary>
@@ -65,6 +66,13 @@ private:
 	/// <param name="col">- Hex's column</param>
 	/// <returns></returns>
 	std::vector<Node*> GetHexNodes(int row, int col);
+
+	/// <summary>
+	/// Produces a vector of pointers to all adjacent nodes to the node at position node_pos
+	/// </summary>
+	/// <param name="node_pos">- Position of given node</param>
+	/// <returns></returns>
+	std::vector<Node*> GetAdjNodes(std::pair<int, int> node_pos);
 public:
 	/// <summary>
 	/// Prints a representation of map.hex_grid to console
@@ -89,6 +97,22 @@ public:
 	/// <param name="pos">- Position of hex on which to place robber</param>
 	/// <returns>true if successful, false if not</returns>
 	bool PlaceRobber(std::pair<int, int> pos);
+
+
+	/// <summary>
+	/// Attempt to place an occupation (Settlement/City) on the map
+	/// </summary>
+	/// <param name="occ">- Occupation to be placed</param>
+	/// <returns></returns>
+	bool PlaceOcc(std::shared_ptr<Occupation> occ, bool needs_road = true);
+
+	/// <summary>
+	/// Attempt to replace an already existing occupation with a new one 
+	/// </summary>
+	/// <param name="occ">- Occupation to replace with</param>
+	/// <param name="needs_road">- Whether or not an adjacent road needs to exist to validate placement</param>
+	/// <returns></returns>
+	bool ReplaceOcc(Occupation& occ);
 
 	/// <summary>
 	/// Constructs a Map instance. Generates a random map.
