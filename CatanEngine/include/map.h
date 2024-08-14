@@ -5,26 +5,23 @@
 #include <optional>
 #include <unordered_map>
 #include <cassert>
-#include "resource.h"
-#include "occupation.h"
 #include "mapcomponents.h"
+#include "pair_hash.h"
 
-
-// All map interactions:
-// Roll dice: 1: For each player, for each occupation, for each adj hex that is hit (without robber), give player resources if possible
-//            2: For each hex that is hit (w/o robber), for each adj occupation, give player resources if possible
-// Place settlement: Add a player settlement on specified node
-// Place city: Add player city on specified node if player has a settlement there
-// Place road: Pick two nodes. If nodes adj, player has either settlement on one of nodes or road linking to one of nodes, and nodes aren't already
-//             linked, link them with this player.
-// Place robber: Mark a hex (or hex position) as having robber placed on it.
-// Print map: Get all map information: Hex locations, Occupation locations, Road locations
 
 class Map {
 public:
+	static const std::vector<Resource> MAP_RESOURCES;
+	static const std::vector<int> DICE_NUMBERS;
+	static const std::vector<std::vector<std::pair<Resource, int>>> PORT_DISCOUNTS;
+	static const std::vector<std::pair<std::pair<int, int>, std::pair<int, int>>> PORT_LOCATIONS;
+	std::random_device seed_gen;
+	std::mt19937 gen;
+
 	std::vector<std::vector<std::optional<Hex>>> hex_grid;
 	std::vector<std::vector<std::optional<Node>>> node_grid;
 	std::unordered_map<Node*, std::vector<std::pair<Node*, Player*>>> roads;
+	std::unordered_map<std::pair<int, int>, std::vector<std::pair<Resource, int>>> port_map;
 	std::pair<int, int> robber_pos;
 private:
 	/// <summary>
@@ -34,6 +31,12 @@ private:
 	/// <param name="top_row_len">- Length of top and bottom row of map</param>
 	/// <param name="mid_row_len">- Length of center row of map</param>
 	void GenerateHexes(int top_row_len, int mid_row_len);
+
+	/// <summary>
+	/// Generates port locations by shuffling the port types around all possible port locations. 
+	/// Result generated inside of map.port_map
+	/// </summary>
+	void GeneratePorts();
 
 	/// <summary>
 	/// Generates a Catan node grid based on desired top row length and middle row length.
@@ -54,25 +57,26 @@ private:
 	/// <summary>
 	/// Produces a vector of pointers to all adjacent hexes to the Node located at (row, col) in map.node_grid
 	/// </summary>
-	/// <param name="row">- Node's row</param>
-	/// <param name="col">- Node's column</param>
-	/// <returns></returns>
-	std::vector<Hex*> GetNodeHexes(int row, int col);
+	/// <param name="node_pos">- Position of given node </param>
+	std::vector<Hex*> GetNodeHexes(std::pair<int, int> node_pos);
 
 	/// <summary>
 	/// Produces a vector of pointers to all adjacent nodes to the Hex located at (row, col) in map.hex_grid
 	/// </summary>
-	/// <param name="row">- Hex's row</param>
-	/// <param name="col">- Hex's column</param>
-	/// <returns></returns>
-	std::vector<Node*> GetHexNodes(int row, int col);
+	/// <param name="hex_pos">- Position of given hex </param>
+	std::vector<Node*> GetHexNodes(std::pair<int, int> hex_pos);
 
 	/// <summary>
 	/// Produces a vector of pointers to all adjacent nodes to the node at position node_pos
 	/// </summary>
 	/// <param name="node_pos">- Position of given node</param>
-	/// <returns></returns>
 	std::vector<Node*> GetAdjNodes(std::pair<int, int> node_pos);
+
+	/// <summary>
+	/// Produces a vector of pointers to all nodes that a player has a road connecting to.
+	/// Assumes that a player needs at least one settlement to have any roads.
+	/// </summary>
+	std::vector<Node*> GetPlayerNodes(Player& player);
 public:
 	/// <summary>
 	/// Prints a representation of map.hex_grid to console
@@ -92,27 +96,52 @@ public:
 	std::vector<std::pair<Resource, int>> GetResources(Occupation& occ);
 
 	/// <summary>
-	/// Attempt to place robber at given position. 
+	/// Attempt to place robber at given position.
 	/// </summary>
 	/// <param name="pos">- Position of hex on which to place robber</param>
-	/// <returns>true if successful, false if not</returns>
-	bool PlaceRobber(std::pair<int, int> pos);
+	/// <returns>
+	/// If successful, a vector of pointers to players that have occupations adjacent to the robber.
+	/// Otherwise, returns std::nullopt. 
+	/// </returns>
+	std::optional<std::vector<Player*>> PlaceRobber(std::pair<int, int> pos);
+
+	/// <summary>
+	/// Attempt to place a road between two nodes at given positions.
+	/// Both nodes must be adjacent.
+	/// One of the two nodes needs to either have an occupation belonging to the player,
+	/// or have an attached road belonging to the player. A road also must not already exist
+	/// in the same location.
+	/// </summary>
+	/// <param name="player">- Player placing the road</param>
+	/// <param name="node_pos1">- First node position</param>
+	/// <param name="node_pos2">- Second node position</param>
+	/// <returns>True if successful, false otherwise</returns>
+	bool PlaceRoad(Player& player, std::pair<int, int> node_pos1, std::pair<int, int> node_pos2);
 
 
 	/// <summary>
-	/// Attempt to place an occupation (Settlement/City) on the map
+	/// Attempt to place an occupation (Settlement/City) on the map. If successful, adds the occupation to the 
+	/// associated Player's occupation list.
 	/// </summary>
 	/// <param name="occ">- Occupation to be placed</param>
+	/// <param name="needs_road">- Whether or not an adjacent road needs to exist to validate placement</param>
 	/// <returns></returns>
 	bool PlaceOcc(std::shared_ptr<Occupation> occ, bool needs_road = true);
 
 	/// <summary>
-	/// Attempt to replace an already existing occupation with a new one 
+	/// Attempt to replace an already existing occupation with a new one .
+	/// Occupation must already exist at same position.
+	/// New occupation owner must be same as previous.
 	/// </summary>
 	/// <param name="occ">- Occupation to replace with</param>
-	/// <param name="needs_road">- Whether or not an adjacent road needs to exist to validate placement</param>
 	/// <returns></returns>
-	bool ReplaceOcc(Occupation& occ);
+	bool ReplaceOcc(std::shared_ptr<Occupation> occ);
+
+	/// <summary>
+	/// Determines the given player's longest road on the map.
+	/// </summary>
+	/// <returns>Length of player's longest road</returns>
+	int GetLongestRoad(Player& player);
 
 	/// <summary>
 	/// Constructs a Map instance. Generates a random map.
@@ -120,11 +149,10 @@ public:
 	Map();
 
 	/// <summary>
-	/// Constructs a Map instance. Generates a random map of desired size.
+	/// Constructs a Map instance. Generates a random map using given seed;
 	/// </summary>
-	/// <param name="top_row_len">- Length of top and bottom rows of map</param>
-	/// <param name="mid_row_len">- Length of center row of map</param>
-	Map(int top_row_len, int mid_row_len);
+	/// <param name="seed"></param>
+	Map(const unsigned int seed);
 };
 
 

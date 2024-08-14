@@ -10,7 +10,7 @@ int Game::DiceRoll() {
 
 void Game::GetPlayers() {
 	for (int i = 0; i < 4; ++i) {
-		players.push_back(Player(i, "Player" + std::to_string(i + 1)));
+		players.push_back(Player("Player" + std::to_string(i + 1)));
 	}
 }
 
@@ -32,12 +32,21 @@ void Game::SetupPhase() {
 
 void Game::PlayerTurn(Player& player) {
 	int dice_roll = DiceRoll();
+	std::vector<Bank::Request> requests;
 	if (dice_roll != 7) {
 		for (Player& player : players) {
-			// for each occupation
-				// Request available resources at occupation's node from map
-				// If any match dice_roll:
-					// Add amnt of that resource corresponding to occupation type
+			for (std::shared_ptr<Occupation>& occ_ptr : player.occupations) {
+				std::shared_ptr<Settlement> settlement_ptr = std::dynamic_pointer_cast<Settlement>(occ_ptr);
+				if (settlement_ptr) {
+					std::vector<std::pair<Resource, int>> resources = map.GetResources(*settlement_ptr);
+					for (std::pair<Resource, int>& rsc : resources) {
+						if (rsc.second == dice_roll) {
+							requests.push_back(Bank::Request(&player, rsc.first, settlement_ptr->production));
+						}
+					}
+				}
+			}
+			bank.ProcessMultiple(requests);
 		}
 	}
 	else {

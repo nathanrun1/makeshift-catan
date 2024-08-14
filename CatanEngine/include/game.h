@@ -6,6 +6,7 @@
 #include "map.h"
 #include "player.h"
 #include "bank.h"
+#include "buildings.h"
 
 class Player;
 
@@ -58,7 +59,5 @@ public:
 	/// Starts the Catan game. Will continue to run until there is a winner.
 	/// </summary>
 	void Start();
-
-	
 };
 

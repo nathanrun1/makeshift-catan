@@ -3,31 +3,40 @@
 #include <unordered_map>
 #include <cassert>
 #include "resource.h"
+#include "player.h"
 
 
-class Request {
-public:
-	const Resource resource;
-	const unsigned int amount;
 
-	Request(const Resource resource, const unsigned int amount) : resource(resource), amount(amount) {}
-};
 
 class Bank {
 public:
+	class Request {
+	public:
+		const Resource resource;
+		const unsigned int amount;
+		Player* const player;
+
+		Request(Player* const player, const Resource resource, const unsigned int amount) : player(player),
+			resource(resource), amount(amount) {}
+	};
+
 	std::unordered_map<Resource, int> inventory;
 
-	// RequestResource(request) determines if bank holds enough resources to fulfill request. If so,
-	//   subtracts requested resources from bank and returns true. Otherwise returns false.
-	// effects: may mutate inventory
-	// time: O(1)
-	bool RequestResource(Request& request);
+	/// <summary>
+	/// Determines if bank holds enough resources to fulfill request. If so, subtracts requested resources
+	/// from bank and adds them to request's player's inventory. If not, the request is not fulfilled and
+	/// bank remains unchanged.
+	/// </summary>
+	/// <returns>True if request fulfilled, false otherwise</returns>
+	bool Process(Request& request);
 
-	// RequestResource(requests) determines if bank holds enough resources to fulfill all requests. If so, 
-	//   subtracts requested resources from bank and returns true. Otherwise returns false.
-	// effects: may mutate inventory
-	// time: O(n), where n is length of requests.
-	bool RequestResources(std::vector<Request>& requests);
+	/// <summary>
+	/// Determines if bank holds enough resources to fulfill requests. If so, subtracts requested resources
+	/// from bank and adds them to requests' players' inventory. If not, no requests are fulfilled and bank
+	/// remains unchanged.
+	/// </summary>
+	/// <returns>True if all requests fulfilled, false otherwise</returns>
+	bool ProcessMultiple(std::vector<Request>& requests);
 
 
 	Bank();

@@ -1,9 +1,10 @@
 #include "bank.h"
 
 // See bank.h for documentation
-bool Bank::RequestResource(Request& request) {
+bool Bank::Process(Request& request) {
 	if (inventory[request.resource] >= request.amount) {
 		inventory[request.resource] -= request.amount;
+		request.player->resources[request.resource] += request.amount;
 		return true;
 	}
 	else {
@@ -12,11 +13,14 @@ bool Bank::RequestResource(Request& request) {
 }
 
 // See bank.h for documentation
-bool Bank::RequestResources(std::vector<Request>& requests) {
+bool Bank::ProcessMultiple(std::vector<Request>& requests) {
 	std::unordered_map<Resource, int> inv_copy = inventory;
-	for (Request request : requests) {
+	for (Request& request : requests) {
 		inv_copy[request.resource] -= request.amount;
 		if (inv_copy[request.resource] < 0) { return false; }
+	}
+	for (Request& request : requests) {
+		request.player->resources[request.resource] += request.amount;
 	}
 	inventory = inv_copy;
 	return true;

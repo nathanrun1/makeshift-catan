@@ -10,10 +10,10 @@ public:
 	Settlement(Player* player, Node* node) : Occupation(player, node) {}
 };
 
-class City : public Occupation {
+class City : public Settlement {
 public:
 	const int victory_points = 2;
 	const int production = 2;
 
-	City(Player* player, Node* node) : Occupation(player, node) {}
+	City(Player* player, Node* node) : Settlement(player, node) {}
 };

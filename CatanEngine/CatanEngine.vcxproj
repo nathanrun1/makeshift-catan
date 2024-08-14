@@ -170,6 +170,7 @@
     <ClInclude Include="include\game.h" />
     <ClInclude Include="include\mapcomponents.h" />
     <ClInclude Include="include\occupation.h" />
+    <ClInclude Include="include\pair_hash.h" />
     <ClInclude Include="include\player.h" />
     <ClInclude Include="include\bank.h" />
     <ClInclude Include="include\map.h" />

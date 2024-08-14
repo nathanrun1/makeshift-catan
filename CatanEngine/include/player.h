@@ -8,6 +8,8 @@
 class Occupation;
 
 class Player {
+private:
+	static int player_count;
 public:
 	int id; // <- must be unique
 	std::string name;
@@ -19,14 +21,20 @@ public:
 	std::unordered_map<Resource, int> discounts;
 	std::unordered_map<Resource, int> resources;
 
-	bool operator==(const Player& other) const {
-		return this->id == other.id;
-	}
+	/// <summary>
+	/// Compares equality of two players. Equality is determined by Player.id
+	/// </summary>
+	/// <param name="other"></param>
+	/// <returns></returns>
+	bool operator==(const Player& other) const;
 
-	bool operator!=(const Player& other) const {
-		return this->id != other.id;
-	}
+	/// <summary>
+	/// Compares inequality of two players. Equality is determined by Player.id
+	/// </summary>
+	/// <param name="other"></param>
+	/// <returns></returns>
+	bool operator!=(const Player& other) const;
 
-	Player(int id);
-	Player(int id, std::string name);
+	Player();
+	Player(std::string name);
 };
