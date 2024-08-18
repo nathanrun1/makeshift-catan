@@ -44,7 +44,7 @@ Bank::Bank(int starting_amount) {
 
 Bank::operator std::string() const{
 	return
-		std::to_string(inventory.at(Resource::Wool)) + " Wool, " + // fix
+		std::to_string(inventory.at(Resource::Wool)) + " Wool, " + 
 		std::to_string(inventory.at(Resource::Grain)) + " Grain, " +
 		std::to_string(inventory.at(Resource::Lumber)) + " Lumber, " +
 		std::to_string(inventory.at(Resource::Brick)) + " Brick, " +

@@ -5,6 +5,7 @@
 #include "buildings.h"
 
 #define LOG(x) std::cout << x << std::endl
+#define _CATAN_DEBUG_
 
 // Progress:
 // Map is able to generate grid of hexes and grid of nodes (spots where settlements go)
@@ -37,7 +38,7 @@ int main() {
 	std::cout << game.DiceRoll() << "\n";
 	Player plr("Nathan");*/
 
-	Map map;
+	//Map map;
 	/*map.PrintHexes();
 	Player plr("Nathan");
 	std::shared_ptr<Settlement> my_settlement = std::make_shared<Settlement>(&plr, &map.node_grid[2][4].value());
@@ -76,14 +77,14 @@ int main() {
 		LOG("    " << RscToString(d.first) << " " << d.second);
 	}*/
 
-	Player plr("Nathan");
-	std::shared_ptr<Settlement> my_settlement = std::make_shared<Settlement>(&plr, &map.node_grid[3][2].value());
-	std::shared_ptr<Settlement> my_settlement2 = std::make_shared<Settlement>(&plr, &map.node_grid[3][5].value());
-	std::shared_ptr<City> my_city = std::make_shared<City>(&plr, &map.node_grid[3][2].value());
+	//Player plr("Nathan");
+	//std::shared_ptr<Settlement> my_settlement = std::make_shared<Settlement>(&plr, &map.node_grid[3][2].value());
+	//std::shared_ptr<Settlement> my_settlement2 = std::make_shared<Settlement>(&plr, &map.node_grid[3][5].value());
+	//std::shared_ptr<City> my_city = std::make_shared<City>(&plr, &map.node_grid[3][2].value());
 
-	map.PlaceOcc(my_settlement, false);
-	//map.PlaceOcc(my_settlement2, false);
-	map.ReplaceOcc(my_city);
+	//map.PlaceOcc(my_settlement, false);
+	////map.PlaceOcc(my_settlement2, false);
+	//map.ReplaceOcc(my_city);
 	/*map.PlaceRoad(plr, { 3, 2 }, { 3, 3 });
 	map.PlaceRoad(plr, { 3, 3 }, { 3, 4 });
 	map.PlaceRoad(plr, { 3, 4 }, { 4, 5 });
@@ -112,4 +113,33 @@ int main() {
 	map.PlaceRoad(plr, { 3, 10 }, { 4, 11 });
 	map.PlaceRoad(plr, { 3, 10 }, { 3, 11 });
 	map.PlaceRoad(plr, { 3, 11 }, { 2, 10 });*/
+
+	/*Player plr("Nathan");
+	GameState game_state = std::bitset<32>();*/
+	/*std::unique_ptr<TradeDecisionResult> decision(dynamic_cast<TradeDecisionResult*>(plr.Decide(game_state, Decision::TRD_Trade).release()));
+	std::cout << "Offering: "
+		<< decision->offer.at(Resource::Lumber) << " Lumber, "
+		<< decision->offer.at(Resource::Brick) << " Brick, "
+		<< decision->offer.at(Resource::Ore) << " Ore, "
+		<< decision->offer.at(Resource::Grain) << " Grain, "
+		<< decision->offer.at(Resource::Wool) << " Wool" << " | Requesting: "
+		<< decision->request.at(Resource::Lumber) << " Lumber, "
+		<< decision->request.at(Resource::Brick) << " Brick, "
+		<< decision->request.at(Resource::Ore) << " Ore, "
+		<< decision->request.at(Resource::Grain) << " Grain, "
+		<< decision->request.at(Resource::Wool) << " Wool!";*/
+
+	/*Game game;
+	game.SetupTurn(plr);
+	std::cout << plr.occupations[0]->node->pos.first << " " << plr.occupations[0]->node->pos.second << "\n";
+	std::cout << "Roads:\n";
+	for (std::pair<Node*, Player*>& road : game.map.roads[plr.occupations[0]->node]) {
+		std::cout << plr.occupations[0]->node->pos.first << " " << plr.occupations[0]->node->pos.second
+			<< " -> " << road.first->pos.first << " " << road.first->pos.second << "\n";
+	}*/
+
+	Game game;
+	game.GetPlayers();
+	game.SetupPhase();
+
 }

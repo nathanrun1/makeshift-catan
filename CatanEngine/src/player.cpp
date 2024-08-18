@@ -1,4 +1,5 @@
 #include "player.h"
+#include "catan_io.h"
 
 int Player::player_count = 0;
 
@@ -20,4 +21,14 @@ bool Player::operator==(const Player& other) const {
 
 bool Player::operator!=(const Player& other) const {
 	return this->id != other.id;
+}
+
+
+std::unique_ptr<DecisionResult> Player::Decide(GameState& game_state, Decision decision) {
+	// modify game_state to only contain info available to this player
+	// e.g.
+	GameState plr_game_state = game_state.data << 1;
+	Catan_IO::Info(name + " DECISION");
+	
+	return agent.Decide(plr_game_state, decision);
 }

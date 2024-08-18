@@ -132,53 +132,53 @@ void Map::Generate(int top_row_len, int mid_row_len) {
 }
 
 std::vector<Hex*> Map::GetNodeHexes(std::pair<int, int> node_pos) {
-	assert(node_pos.first >= 0);
-	assert(node_pos.second >= 0);
 	int row = node_pos.first;
 	int col = node_pos.second;
 	std::vector<Hex*> hexes;
-	if (col % 2 == 0) {
-		if (row < hex_grid.size()) {
-			if (col / 2 - 1 >= 0 && col / 2 - 1 < hex_grid[row].size() && hex_grid[row][col / 2 - 1]) {
-				hexes.push_back(&(*hex_grid[row][col / 2 - 1]));
+	if (row >= 0 && col >= 0) {
+		if (col % 2 == 0) {
+			if (row < hex_grid.size()) {
+				if (col / 2 - 1 >= 0 && col / 2 - 1 < hex_grid[row].size() && hex_grid[row][col / 2 - 1]) {
+					hexes.push_back(&(*hex_grid[row][col / 2 - 1]));
+				}
+				if (col / 2 >= 0 && col / 2 < hex_grid[row].size() && hex_grid[row][col / 2]) {
+					hexes.push_back(&(*hex_grid[row][col / 2]));
+				}
 			}
-			if (col / 2 >= 0 && col / 2 < hex_grid[row].size() && hex_grid[row][col / 2]) {
-				hexes.push_back(&(*hex_grid[row][col / 2]));
-			}
-		}
-		if (row - 1 >= 0 && row - 1 < hex_grid.size() && col / 2 - 1 >= 0 && col / 2 - 1 < hex_grid[row - 1].size() && hex_grid[row - 1][col / 2 - 1]) {
+			if (row - 1 >= 0 && row - 1 < hex_grid.size() && col / 2 - 1 >= 0 && col / 2 - 1 < hex_grid[row - 1].size() && hex_grid[row - 1][col / 2 - 1]) {
 
-			hexes.push_back(&(*hex_grid[row - 1][col / 2 - 1]));
-		}
-	}
-	else {
-		if (row - 1 >= 0 && row - 1 < hex_grid.size()) {
-			if (col / 2 - 1 >= 0 && col / 2 - 1 < hex_grid[row - 1].size() && hex_grid[row - 1][col / 2 - 1]) {
 				hexes.push_back(&(*hex_grid[row - 1][col / 2 - 1]));
 			}
-			if (col / 2 >= 0 && col / 2 < hex_grid[row - 1].size() && hex_grid[row - 1][col / 2]) {
-				hexes.push_back(&(*hex_grid[row - 1][col / 2]));
-			}
 		}
-		if (row < hex_grid.size() && col / 2 >= 0 && col / 2 < hex_grid[row].size() && hex_grid[row][col / 2]) {
-			hexes.push_back(&(*hex_grid[row][col / 2]));
+		else {
+			if (row - 1 >= 0 && row - 1 < hex_grid.size()) {
+				if (col / 2 - 1 >= 0 && col / 2 - 1 < hex_grid[row - 1].size() && hex_grid[row - 1][col / 2 - 1]) {
+					hexes.push_back(&(*hex_grid[row - 1][col / 2 - 1]));
+				}
+				if (col / 2 >= 0 && col / 2 < hex_grid[row - 1].size() && hex_grid[row - 1][col / 2]) {
+					hexes.push_back(&(*hex_grid[row - 1][col / 2]));
+				}
+			}
+			if (row < hex_grid.size() && col / 2 >= 0 && col / 2 < hex_grid[row].size() && hex_grid[row][col / 2]) {
+				hexes.push_back(&(*hex_grid[row][col / 2]));
+			}
 		}
 	}
 	return hexes;
 }
 
 std::vector<Node*> Map::GetHexNodes(std::pair<int, int> hex_pos) {
-	assert(hex_pos.first >= 0 && hex_pos.first < hex_grid.size());
-	assert(hex_pos.second >= 0 && hex_pos.second < hex_grid[hex_pos.first].size());
 	int row = hex_pos.first;
 	int col = hex_pos.second;
 	std::vector<Node*> nodes;
-	nodes.push_back(&(*node_grid[row][col * 2]));
-	nodes.push_back(&(*node_grid[row][col * 2 + 1]));
-	nodes.push_back(&(*node_grid[row][col * 2 + 2]));
-	nodes.push_back(&(*node_grid[row + 1][col * 2 + 1]));
-	nodes.push_back(&(*node_grid[row + 1][col * 2 + 2]));
-	nodes.push_back(&(*node_grid[row + 1][col * 2 + 3]));
+	if (row >= 0 && row < hex_grid.size() && col >= 0 && col < hex_grid[row].size()) {
+		nodes.push_back(&(*node_grid[row][col * 2]));
+		nodes.push_back(&(*node_grid[row][col * 2 + 1]));
+		nodes.push_back(&(*node_grid[row][col * 2 + 2]));
+		nodes.push_back(&(*node_grid[row + 1][col * 2 + 1]));
+		nodes.push_back(&(*node_grid[row + 1][col * 2 + 2]));
+		nodes.push_back(&(*node_grid[row + 1][col * 2 + 3]));
+	}
 	return nodes;
 }
 
@@ -262,8 +262,6 @@ std::vector<std::pair<Resource, int>> Map::GetResources(Occupation& occ) {
 }
 
 std::optional<std::vector<Player*>> Map::PlaceRobber(std::pair<int, int> pos) {
-	assert(pos.first >= 0);
-	assert(pos.second >= 0);
 	if (robber_pos != pos && pos.first >= 0 && pos.first < hex_grid.size() 
 		&& pos.second >= 0 && pos.second << hex_grid[pos.first].size() && hex_grid[pos.first][pos.second]) {
 		robber_pos = pos;
@@ -442,5 +440,86 @@ bool Map::PlaceRoad(Player& player, std::pair<int, int> node_pos1, std::pair<int
 	// Place the road
 	roads[node1].push_back({ node2, &player });
 	roads[node2].push_back({ node1, &player });
+	player.longest_road = GetLongestRoad(player);
 	return true;
+}
+
+std::optional<std::pair<int, int>> Map::OccGetRandPos(Player& player, bool needs_road) {
+	for (std::vector<std::optional<Node>>& row : node_grid) {
+		for (std::optional<Node>& node_opt : row) {
+			if (node_opt) {
+				Node& node = node_opt.value();
+				if (!node.occ) {
+					bool adj_occ = false;
+					std::vector<Node*> adj_nodes = GetAdjNodes({ node.pos.first, node.pos.second });
+					for (Node*& adj_node_ptr : adj_nodes) {
+						if (adj_node_ptr->occ) {
+							adj_occ = true;
+							break;
+						}
+					}
+					if (adj_occ) {
+						// Adjacent occupation to node, cannot place here
+						continue;
+					}
+					if (needs_road) {
+						bool has_road = false;
+						for (std::pair<Node*, Player*>& road : roads[&node]) {
+							if (*road.second == player) {
+								has_road = true;
+								break;
+							}
+						}
+						if (!has_road) {
+							// No valid adjacent roads, cannot place here
+							continue;
+						}
+					}
+					// No adjacent occupations and, if needed, a valid road exists. Can place here!
+					return std::make_optional<std::pair<int, int>>( node.pos.first, node.pos.second );
+				}
+			}
+		}
+	}
+	// All nodes invalid, return nullopt
+	return std::nullopt;
+}
+
+bool Map::RoadExists(std::pair<int, int> node_pos1, std::pair<int, int> node_pos2) {
+	if (node_pos1.first < node_grid.size() && node_pos1.second < node_grid[node_pos1.first].size() && node_grid[node_pos1.first][node_pos1.second] &&
+		node_pos2.first < node_grid.size() && node_pos2.second < node_grid[node_pos2.first].size() && node_grid[node_pos2.first][node_pos2.second]) {
+		// Nodes exist, do rest
+		Node& node1 = node_grid[node_pos1.first][node_pos1.second].value();
+		Node& node2 = node_grid[node_pos2.first][node_pos2.second].value();
+		for (std::pair<Node*, Player*>& road : roads[&node1]) {
+			if (road.first == &node2) {
+				return true;
+			}
+		}
+		return false;
+	}
+}
+
+std::optional<std::pair<std::pair<int, int>, std::pair<int, int>>> Map::RoadGetRandPos(Player& player, std::optional<std::shared_ptr<Occupation>> occ) {
+	if (occ != std::nullopt && occ.value()) {
+		std::vector<Node*> adj_nodes = GetAdjNodes(occ.value()->node->pos);
+		for (Node*& adj_node_ptr : adj_nodes) {
+			if (!RoadExists(occ.value()->node->pos, adj_node_ptr->pos)) {
+				return { { occ.value()->node->pos, adj_node_ptr->pos } };
+			}
+		}
+		return std::nullopt;
+	}
+	else {
+		std::vector<Node*> plr_nodes = GetPlayerNodes(player);
+		for (Node*& node : plr_nodes) {
+			std::vector<Node*> adj_nodes = GetAdjNodes(node->pos);
+			for (Node*& adj_node_ptr : adj_nodes) {
+				if (!RoadExists(node->pos, adj_node_ptr->pos)) {
+					return { { node->pos, adj_node_ptr->pos } };
+				}
+			}
+		}
+		return std::nullopt;
+	}
 }

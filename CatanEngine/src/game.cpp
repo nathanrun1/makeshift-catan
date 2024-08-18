@@ -1,6 +1,6 @@
 #include "game.h"
 
-Game::Game(int vp_to_win) : vp_to_win(vp_to_win), m_gen(m_rd()) {}
+Game::Game(int vp_to_win) : vp_to_win(vp_to_win), m_gen(m_rd()), game_state(std::bitset<32>()) {}
 
 int Game::DiceRoll() {
 	std::uniform_int_distribution dist(1, 6);
@@ -14,19 +14,33 @@ void Game::GetPlayers() {
 	}
 }
 
+void Game::SetupTurn(Player& player) {
+	// SETTLEMENT PLACEMENT:
+	std::unique_ptr<PositionDecisionResult>
+		settle_decision(dynamic_cast<PositionDecisionResult*>(player.Decide(game_state, Decision::POS_IniSettle).release()));
+	std::pair<int, int> settle_pos(0, 0);
+	if (!(settle_decision && settle_decision->positions.size() > 0 && BuildSettlement(player, settle_pos = settle_decision->positions[0], true))) {
+		// Assumes valid position exists, in case that decision is invalid 
+		BuildSettlement(player, settle_pos = map.OccGetRandPos(player, false).value(), true);
+	}
+	// ROAD PLACEMENT:
+	std::unique_ptr<PositionDecisionResult>
+		road_decision(dynamic_cast<PositionDecisionResult*>(player.Decide(game_state, Decision::POS_IniRoad).release()));
+	if (!(road_decision && road_decision->positions.size() >= 2 &&
+		(road_decision->positions[0] == settle_pos || road_decision->positions[1] == settle_pos) &&
+		BuildRoad(player, road_decision->positions[0], road_decision->positions[1]))) {
+		// Decision invalid, place road and random valid spot
+		std::pair<std::pair<int, int>, std::pair<int, int>> rand_spot = map.RoadGetRandPos(player,{map.node_grid[settle_pos.first][settle_pos.second].value().occ}).value();
+		BuildRoad(player, rand_spot.first, rand_spot.second);
+	}
+}
+
 void Game::SetupPhase() {
 	for (std::vector<Player>::iterator it = players.begin(); it != players.end(); ++it) {
-		// Prompt settlement placement location from player (either thru input or sum else if its an RL model)
-		// Request settlement placement at location from map
-			// If not successful, re-request placement location. 
-				// If same issue, place at random valid spot.
-		// Prompt road placement location from player (must be adj. to recent settlement)
-		// Check that road is adj. to first settlement, and request placement onto map
-			// If not successful, re-request placement location.
-				// If same issue, place at random valid spot.
+		SetupTurn(*it);
 	}
 	for (std::vector<Player>::iterator it = players.end(); it != players.begin(); --it) {
-		// same shit
+		SetupTurn(*(it - 1));
 	}
 }
 
@@ -101,4 +115,81 @@ void Game::Start() {
 
 void Game::Win(Player& player) {
 	std::cout << player.name << " has won Catan!" << std::endl;
+}
+
+bool Game::BuildSettlement(Player& player, std::pair<int, int> pos, bool is_initial) {
+	if (pos.first >= 0 && pos.first < map.node_grid.size() && pos.second >= 0 && pos.second < map.node_grid[pos.first].size()) {
+		std::shared_ptr<Settlement> new_settle = std::make_shared<Settlement>(&player, &(map.node_grid[pos.first][pos.second].value()));
+		if (map.PlaceOcc(new_settle, !is_initial)) {
+			player.victory_points += 1;
+			Catan_IO::Info(player.name + " built settlement at (" + std::to_string(pos.first) + "," + std::to_string(pos.second)
+				+ ")! +1 VPs");
+			return true;
+		}
+	}
+	Catan_IO::Debug("Failed to build settlement for player '" + player.name + "' at (" + std::to_string(pos.first) + "," +
+		std::to_string(pos.second) + ").");
+	return false;
+}
+
+bool Game::BuildCity(Player& player, std::pair<int, int> pos) {
+	if (pos.first >= 0 && pos.first < map.node_grid.size() && pos.second >= 0 && pos.second < map.node_grid[pos.first].size()) {
+		std::shared_ptr<City> new_city = std::make_shared<City>(&player, &(map.node_grid[pos.first][pos.second].value()));
+		if (map.ReplaceOcc(new_city)) {
+			player.victory_points += 1;
+			Catan_IO::Info(player.name + " built city at (" + std::to_string(pos.first) + "," + std::to_string(pos.second)
+				+ ")! +1 VPs");
+			return true;
+		}
+	}
+	return false;
+}
+
+bool Game::BuildRoad(Player& player, std::pair<int, int> node_pos1, std::pair<int, int> node_pos2) {
+	if (map.PlaceRoad(player, node_pos1, node_pos2)) {
+		Catan_IO::Info(player.name + " built road from (" + std::to_string(node_pos1.first) + "," + std::to_string(node_pos1.second)
+			+ ") to (" + std::to_string(node_pos2.first) + "," + std::to_string(node_pos2.second) + ")!");
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+void Game::UpdateLongestRoad() {
+	Player* longest_road_holder = longest_road_plr;
+	int longest_road = longest_road_holder ? longest_road_holder->longest_road : MIN_ROAD_SIZE - 1;
+	for (Player& player : players) {
+		if ((!longest_road_plr || player != *longest_road_plr) && player.longest_road > longest_road) {
+			longest_road_holder = &player;
+			longest_road = longest_road_holder->longest_road;
+		}
+	}
+	if (longest_road_holder != longest_road_plr) {
+		Catan_IO::Info(longest_road_holder->name + " has taken longest road! +2 VPs");
+		if (longest_road_plr) {
+			Catan_IO::Info(longest_road_plr->name + " has lost longest road! -2 VPs");
+			longest_road_plr->victory_points -= 2;
+		}
+		longest_road_plr = longest_road_holder;
+		longest_road_plr->victory_points += 2;
+	}
+}
+
+void Game::UpdateLargestArmy() {
+	Player* largest_army_holder = largest_army_plr;
+	int largest_army = largest_army_holder ? largest_army_holder->army_size : MIN_ARMY_SIZE - 1;
+	for (Player& player : players) {
+		if ((!largest_army_plr || player != *largest_army_plr) && player.army_size > largest_army) {
+			largest_army_holder = &player;
+			largest_army = largest_army_holder->army_size;
+		}
+	}
+	if (largest_army_holder != largest_army_plr) {
+		if (largest_army_plr) {
+			largest_army_plr->victory_points -= 2;
+		}
+		largest_army_plr = largest_army_holder;
+		largest_army_plr->victory_points += 2;
+	}
 }

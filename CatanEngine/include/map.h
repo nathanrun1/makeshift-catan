@@ -111,12 +111,20 @@ public:
 	/// One of the two nodes needs to either have an occupation belonging to the player,
 	/// or have an attached road belonging to the player. A road also must not already exist
 	/// in the same location.
+	/// Updates player's longest road on successful placement.
 	/// </summary>
 	/// <param name="player">- Player placing the road</param>
 	/// <param name="node_pos1">- First node position</param>
 	/// <param name="node_pos2">- Second node position</param>
 	/// <returns>True if successful, false otherwise</returns>
 	bool PlaceRoad(Player& player, std::pair<int, int> node_pos1, std::pair<int, int> node_pos2);
+
+	/// <summary>
+	/// Checks if a road exists between two provided node positions. Assumes that 
+	/// provided positions are valid.
+	/// </summary>
+	/// <returns>True if road exists, false if spot is available</returns>
+	bool RoadExists(std::pair<int, int> node_pos1, std::pair<int, int> node_pos2);
 
 
 	/// <summary>
@@ -127,6 +135,24 @@ public:
 	/// <param name="needs_road">- Whether or not an adjacent road needs to exist to validate placement</param>
 	/// <returns></returns>
 	bool PlaceOcc(std::shared_ptr<Occupation> occ, bool needs_road = true);
+
+	/// <summary>
+	/// Gets a random valid occupation spot for a given player
+	/// </summary>
+	/// <param name="player">- Player placing the occupation</param>
+	/// <param name="needs_road">- Whether or not an adjacent road needs to exist to validate placement</param>
+	/// <returns>Valid position if exists, otherwise std::nullopt</returns>
+	std::optional<std::pair<int, int>> OccGetRandPos(Player& player, bool needs_road = true);
+
+	/// <summary>
+	/// Gets a random valid spot for road placement for player.
+	/// If occupation given, will limit valid spots to adjacent to given occupation.
+	/// Otherwise, will search all possible locations.
+	/// </summary>
+	/// <param name="player">- Player placing the road</param>
+	/// <param name="occ">- Occupation that the road must be adjacent to (optional)</param>
+	/// <returns>- Pair of node positions, road spot is between two provided nodes, nullopt if no valid position exists.</returns>
+	std::optional<std::pair<std::pair<int, int>, std::pair<int, int>>> RoadGetRandPos(Player& player, std::optional<std::shared_ptr<Occupation>> occ = std::nullopt);
 
 	/// <summary>
 	/// Attempt to replace an already existing occupation with a new one .

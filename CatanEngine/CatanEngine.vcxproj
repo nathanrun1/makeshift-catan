@@ -166,8 +166,12 @@
     <ClCompile Include="src\map.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\agent.h" />
     <ClInclude Include="include\buildings.h" />
+    <ClInclude Include="include\decision.h" />
     <ClInclude Include="include\game.h" />
+    <ClInclude Include="include\gamestate.h" />
+    <ClInclude Include="include\catan_io.h" />
     <ClInclude Include="include\mapcomponents.h" />
     <ClInclude Include="include\occupation.h" />
     <ClInclude Include="include\pair_hash.h" />

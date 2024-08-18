@@ -3,6 +3,7 @@
 #include <string>
 #include <memory>
 #include "resource.h"
+#include "agent.h"
 
 //class DevCard;
 class Occupation;
@@ -11,6 +12,8 @@ class Player {
 private:
 	static int player_count;
 public:
+	Agent agent = { AgentType::IO };
+
 	int id; // <- must be unique
 	std::string name;
 	int victory_points = 0;
@@ -37,4 +40,6 @@ public:
 
 	Player();
 	Player(std::string name);
+
+	std::unique_ptr<DecisionResult> Decide(GameState& game_state, Decision decision);
 };

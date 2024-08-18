@@ -3,8 +3,6 @@
 #include <string>
 #include <vector>
 
-
-
 enum class Resource {
 	Wool, Grain, Lumber, Brick, Ore, Desert
 };
