@@ -71,8 +71,10 @@ void Game::SetupPhase() {
 }
 
 void Game::PlayerTurn(Player& player) {
+	map.PrintHexes();
 	Catan_IO::Info(player.name + "'s TURN");
 	int dice_roll = DiceRoll();
+	Catan_IO::Info("Dice rolled: " + std::to_string(dice_roll));
 	std::vector<Bank::Request> requests;
 	if (dice_roll != 7) {
 		for (Player& player : players) {
@@ -87,10 +89,41 @@ void Game::PlayerTurn(Player& player) {
 					}
 				}
 			}
-			bank.ProcessMultiple(requests);
 		}
+		bank.ProcessMultiple(requests);
 	}
 	else {
+		for (Player& p : players) {
+			int rsc_amnt = p.GetResourceAmnt();
+			if (rsc_amnt >= MIN_CARDS_DISCARD) {
+				int to_discard = rsc_amnt / 2;
+				Catan_IO::Info(p.name + ", you must discard " + std::to_string(to_discard) + " cards");
+				std::unique_ptr<ResourceDecisionResult>
+					discard_decision(dynamic_cast<ResourceDecisionResult*>(player.Decide(game_state, Decision::RSC_Discard).release()));
+				int discarded = 0;
+				std::vector<Resource> rscs_to_discard = discard_decision->resources;
+				for (; discarded < std::min(to_discard, static_cast<int>(rscs_to_discard.size())); ++discarded) {
+					if (p.resources[rscs_to_discard[discarded]] > 0) {
+						p.resources[rscs_to_discard[discarded]] -= 1;
+					}
+					else {
+						for (std::pair<const Resource, int>& rsc_amnt_pair : p.resources) {
+							if (rsc_amnt_pair.second > 0) {
+								p.resources[rsc_amnt_pair.first] -= 1;
+							}
+						}
+					}
+				}
+				for (; discarded < to_discard; ++discarded) {
+					// Decision didn't provide enough resources
+					for (std::pair<const Resource, int>& rsc_amnt_pair : p.resources) {
+						if (rsc_amnt_pair.second > 0) {
+							p.resources[rsc_amnt_pair.first] -= 1;
+						}
+					}
+				}
+			}
+		}
 		PlayRobber(player);
 	}
 	// From player, listen for: Play Dev Card, Build Settlement, Build Road, Upgrade to City, Draw Dev Card, Trade
@@ -120,7 +153,7 @@ void Game::PlayerTurn(Player& player) {
 			// Play Dev Card
 			if (!dev_played) {
 				std::unique_ptr<OptionDecisionResult>
-					dev_decision(dynamic_cast<OptionDecisionResult*>(player.Decide(game_state, Decision::OPT_Turn).release()));
+					dev_decision(dynamic_cast<OptionDecisionResult*>(player.Decide(game_state, Decision::OPT_PlayDev).release()));
 				int dev_choice = 0;
 				if (dev_decision) {
 					dev_choice = dev_decision->option;
@@ -276,6 +309,7 @@ void Game::PlayerTurn(Player& player) {
 }
 
 void Game::Start() {
+	GetPlayers();
 	SetupPhase();
 	while (true) {
 		for (Player& player : players) {
@@ -324,7 +358,7 @@ bool Game::BuildRoad(Player& player, std::pair<int, int> node_pos1, std::pair<in
 	if (map.PlaceRoad(player, node_pos1, node_pos2)) {
 		Catan_IO::Info(player.name + " built road from (" + std::to_string(node_pos1.first) + "," + std::to_string(node_pos1.second)
 			+ ") to (" + std::to_string(node_pos2.first) + "," + std::to_string(node_pos2.second) + ")!");
-		if (player.longest_road > longest_road_plr->longest_road) {
+		if (longest_road_plr != nullptr && player.longest_road > longest_road_plr->longest_road) {
 			UpdateLongestRoad();
 		}
 		return true;
@@ -461,7 +495,7 @@ void Game::Dev_Knight(Player& player) {
 	Catan_IO::Info(player.name + " is playing Knight");
 	PlayRobber(player);
 	player.army_size += 1;
-	if (player.army_size > largest_army_plr->army_size) {
+	if (largest_army_plr != nullptr && player.army_size > largest_army_plr->army_size) {
 		UpdateLargestArmy();
 	}
 }

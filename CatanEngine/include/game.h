@@ -152,6 +152,7 @@ public:
 	
 	static const int MIN_ARMY_SIZE = 3; // Minimum army size for largest army
 	static const int MIN_ROAD_SIZE = 5; // MInimum road length for longest road
+	static const int MIN_CARDS_DISCARD = 8;
 	static const std::unordered_map<Resource, int> ROAD_COST;
 	static const std::unordered_map<Resource, int> SETTLE_COST;
 	static const std::unordered_map<Resource, int> CITY_COST;

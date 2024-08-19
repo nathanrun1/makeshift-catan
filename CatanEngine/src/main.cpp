@@ -142,17 +142,19 @@ int main() {
 	}*/
 
 	Game game;
-	game.GetPlayers();
+	/*game.GetPlayers();
 	game.SetupPhase();
 	game.players[0].resources[Resource::Brick] = 3;
 	Catan_IO::Debug("Giving " + game.players[0].name + " 3 Lumber");
 	game.players[1].resources[Resource::Lumber] = 5;
 	Catan_IO::Debug("Giving " + game.players[1].name + " 5 Lumber");
-	game.Dev_Knight(game.players[2]);
+	game.Dev_Knight(game.players[2]);*/
 
 	// next to do
 	// functionality for knight and YOP (include edge cases where no resources left in bank!
 	// make sure that resource giving checks if robber is on hex (pre sure it does)
 	// program rest of game functionality including dev cards
 	// almost fucking done holy shit
+
+	game.Start();
 }
