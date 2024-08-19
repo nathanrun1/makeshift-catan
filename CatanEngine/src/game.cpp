@@ -1,6 +1,9 @@
+#define _CATAN_DEBUG_
 #include "game.h"
 
-Game::Game(int vp_to_win) : vp_to_win(vp_to_win), m_gen(m_rd()), game_state(std::bitset<32>()) {}
+
+Game::Game(int vp_to_win) : largest_army_plr(nullptr), longest_road_plr(nullptr), 
+vp_to_win(vp_to_win), m_gen(m_rd()), game_state(std::bitset<32>()) {}
 
 int Game::DiceRoll() {
 	std::uniform_int_distribution dist(1, 6);
@@ -45,6 +48,7 @@ void Game::SetupPhase() {
 }
 
 void Game::PlayerTurn(Player& player) {
+	Catan_IO::Info(player.name + "'s TURN");
 	int dice_roll = DiceRoll();
 	std::vector<Bank::Request> requests;
 	if (dice_roll != 7) {
@@ -192,4 +196,40 @@ void Game::UpdateLargestArmy() {
 		largest_army_plr = largest_army_holder;
 		largest_army_plr->victory_points += 2;
 	}
+}
+
+void Game::Dev_RB(Player& player) {
+	Catan_IO::Info(player.name + " is playing Road Builder");
+	for (int i = 0; i < 2; ++i) {
+		std::unique_ptr<PositionDecisionResult>
+			road_decision(dynamic_cast<PositionDecisionResult*>(player.Decide(game_state, Decision::POS_IniRoad).release()));
+		if (!(road_decision && road_decision->positions.size() >= 2 &&
+			BuildRoad(player, road_decision->positions[0], road_decision->positions[1]))) {
+			std::optional<std::pair<std::pair<int, int>, std::pair<int, int>>> rand_spot = map.RoadGetRandPos(player);
+			if (!(rand_spot && BuildRoad(player, rand_spot.value().first, rand_spot.value().second))) {
+				Catan_IO::Info("No more road spots left!");
+				return;
+			}
+		}
+	}
+}
+
+void Game::Dev_Mono(Player& player) {
+	Catan_IO::Info(player.name + " is playing Monopoly");
+	std::unique_ptr<ResourceDecisionResult>
+		mono_decision(dynamic_cast<ResourceDecisionResult*>(player.Decide(game_state, Decision::RSC_Monopoly).release()));
+	Resource to_steal = mono_decision ? mono_decision->resources[0] : Resource::Lumber;
+	int amnt = 0;
+	for (Player& opponent : players) {
+		if (opponent != player) {
+			amnt += opponent.resources[to_steal];
+			if (opponent.resources[to_steal] > 0) {
+				Catan_IO::Info(player.name + " has stolen " + std::to_string(opponent.resources[to_steal]) +
+					" " + RscToString(to_steal) + " from " + opponent.name + "!");
+			}
+			opponent.resources[to_steal] = 0;
+		}
+	}
+	Catan_IO::Info(player.name + " stole a total of " + std::to_string(amnt) + " " + RscToString(to_steal) + "!");
+	player.resources[to_steal] += amnt;
 }

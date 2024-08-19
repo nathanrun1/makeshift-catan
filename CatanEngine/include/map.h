@@ -7,6 +7,7 @@
 #include <cassert>
 #include "mapcomponents.h"
 #include "pair_hash.h"
+#include "devcard.h"
 
 
 class Map {
@@ -15,6 +16,7 @@ public:
 	static const std::vector<int> DICE_NUMBERS;
 	static const std::vector<std::vector<std::pair<Resource, int>>> PORT_DISCOUNTS;
 	static const std::vector<std::pair<std::pair<int, int>, std::pair<int, int>>> PORT_LOCATIONS;
+	static const std::vector<DevCard> DEVCARDS;
 	std::random_device seed_gen;
 	std::mt19937 gen;
 
@@ -23,6 +25,7 @@ public:
 	std::unordered_map<Node*, std::vector<std::pair<Node*, Player*>>> roads;
 	std::unordered_map<std::pair<int, int>, std::vector<std::pair<Resource, int>>> port_map;
 	std::pair<int, int> robber_pos;
+	std::stack<DevCard> devcard_deck;
 private:
 	/// <summary>
 	/// Generates random Catan hex grid based on desired top row length and middle row length.
@@ -37,6 +40,11 @@ private:
 	/// Result generated inside of map.port_map
 	/// </summary>
 	void GeneratePorts();
+
+	/// <summary>
+	/// Generates random deck of dev cards inside map.devcard_deck from Map::DEVCARDS using seed.
+	/// </summary>
+	void ShuffleDevcards();
 
 	/// <summary>
 	/// Generates a Catan node grid based on desired top row length and middle row length.
@@ -179,6 +187,12 @@ public:
 	/// </summary>
 	/// <param name="seed"></param>
 	Map(const unsigned int seed);
+
+	/// <summary>
+	/// Draws a development card from deck. 
+	/// </summary>
+	/// <returns>Drawn development card, or std::nullopt if deck is empty.</returns>
+	std::optional<DevCard> DrawDevcard();
 };
 
 

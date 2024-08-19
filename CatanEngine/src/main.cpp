@@ -1,11 +1,14 @@
+#define LOG(x) std::cout << x << std::endl
+
+#include "catan_io.h"
 #include <iostream>
 #include <memory>
 #include <chrono>
 #include "game.h"
 #include "buildings.h"
 
-#define LOG(x) std::cout << x << std::endl
-#define _CATAN_DEBUG_
+
+
 
 // Progress:
 // Map is able to generate grid of hexes and grid of nodes (spots where settlements go)
@@ -140,6 +143,14 @@ int main() {
 
 	Game game;
 	game.GetPlayers();
-	game.SetupPhase();
+	game.players[0].resources[Resource::Lumber] = 3;
+	game.players[1].resources[Resource::Lumber] = 5;
+	game.Dev_Mono(game.players[2]);
+	std::cout << "lumber amnt for plr now: " << game.players[2].resources[Resource::Lumber] << "\n";
 
+	// next to do
+	// functionality for knight and YOP (include edge cases where no resources left in bank!
+	// make sure that resource giving checks if robber is on hex (pre sure it does)
+	// program rest of game functionality including dev cards
+	// almost fucking done holy shit
 }

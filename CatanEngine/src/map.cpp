@@ -56,6 +56,16 @@ const std::vector<std::vector<std::pair<Resource, int>>> Map::PORT_DISCOUNTS = {
 	{{Resource::Brick, 3}, {Resource::Lumber, 3}, {Resource::Grain, 3}, {Resource::Ore, 3}, {Resource::Wool, 3}}
 };
 
+const std::vector<DevCard> Map::DEVCARDS = {
+		DevCard::Knight,DevCard::Knight,DevCard::Knight,DevCard::Knight,DevCard::Knight,
+		DevCard::Knight,DevCard::Knight,DevCard::Knight,DevCard::Knight,DevCard::Knight,
+		DevCard::Knight,DevCard::Knight,DevCard::Knight,DevCard::Knight,
+		DevCard::VictoryPoint,DevCard::VictoryPoint,DevCard::VictoryPoint,DevCard::VictoryPoint,DevCard::VictoryPoint,
+		DevCard::RoadBuilder,DevCard::RoadBuilder,
+		DevCard::YearOfPlenty,DevCard::YearOfPlenty,
+		DevCard::Monopoly,DevCard::Monopoly
+};
+
 void Map::GenerateHexes(int top_row_len, int mid_row_len) {
 	assert(top_row_len >= 1);
 	assert(mid_row_len >= top_row_len);
@@ -333,6 +343,23 @@ void Map::GeneratePorts() {
 		port_map[port_location.second] = *discount;
 		++discount;
 	}
+}
+
+void Map::ShuffleDevcards() {
+	std::vector<DevCard> devcards = DEVCARDS;
+	std::shuffle(devcards.begin(), devcards.end(), gen);
+	for (DevCard& devcard : devcards) {
+		devcard_deck.push(devcard);
+	}
+}
+
+std::optional<DevCard> Map::DrawDevcard() {
+	if (!devcard_deck.empty()) {
+		DevCard devcard = devcard_deck.top();
+		devcard_deck.pop();
+		return devcard;
+	}
+	return std::nullopt;
 }
 
 std::vector<Node*> Map::GetPlayerNodes(Player& player) {

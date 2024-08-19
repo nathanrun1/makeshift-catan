@@ -157,6 +157,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\agent.cpp" />
     <ClCompile Include="src\bank.cpp" />
     <ClCompile Include="src\game.cpp" />
     <ClCompile Include="src\occupation.cpp" />
@@ -169,6 +170,7 @@
     <ClInclude Include="include\agent.h" />
     <ClInclude Include="include\buildings.h" />
     <ClInclude Include="include\decision.h" />
+    <ClInclude Include="include\devcard.h" />
     <ClInclude Include="include\game.h" />
     <ClInclude Include="include\gamestate.h" />
     <ClInclude Include="include\catan_io.h" />

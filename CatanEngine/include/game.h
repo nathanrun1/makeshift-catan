@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include <random>
+#include <stack>
 #include <iostream>
 #include "map.h"
 #include "player.h"
@@ -86,6 +87,31 @@ public: // temp
 	/// Assumes that only one person has the largest army
 	/// </summary>
 	void UpdateLargestArmy();
+
+	// DEVELOPMENT CARD FUNCTIONALITY:
+
+	/// <summary>
+	/// Plays a Road Builder dev card for given player
+	/// </summary>
+	void Dev_RB(Player& player);
+
+	/// <summary>
+	/// Plays a Monopoly dev card for given player
+	/// </summary>
+	/// <param name="player"></param>
+	void Dev_Mono(Player& player);
+
+    /// <summary>
+    /// Plays a Year of Plenty dev card for given player
+    /// </summary>
+    /// <param name="player"></param>
+    void Dev_YOP(Player& player);
+
+	/// <summary>
+	/// Plays a Knight dev card for given player
+	/// </summary>
+	/// <param name="player"></param>
+	void Dev_Knight(Player& player);
 public:
 	std::vector<Player> players;
 	Map map;
