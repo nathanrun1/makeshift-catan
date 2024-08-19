@@ -218,7 +218,7 @@ void Game::Dev_Mono(Player& player) {
 	Catan_IO::Info(player.name + " is playing Monopoly");
 	std::unique_ptr<ResourceDecisionResult>
 		mono_decision(dynamic_cast<ResourceDecisionResult*>(player.Decide(game_state, Decision::RSC_Monopoly).release()));
-	Resource to_steal = mono_decision ? mono_decision->resources[0] : Resource::Lumber;
+	Resource to_steal = (mono_decision != nullptr && mono_decision->resources.size() > 0) ? mono_decision->resources[0] : Resource::Lumber;
 	int amnt = 0;
 	for (Player& opponent : players) {
 		if (opponent != player) {
@@ -232,4 +232,127 @@ void Game::Dev_Mono(Player& player) {
 	}
 	Catan_IO::Info(player.name + " stole a total of " + std::to_string(amnt) + " " + RscToString(to_steal) + "!");
 	player.resources[to_steal] += amnt;
+}
+
+void Game::Dev_YOP(Player& player) {
+	Catan_IO::Info(player.name + " is playing Year of Plenty");
+	std::unique_ptr<ResourceDecisionResult>
+		yop_decision(dynamic_cast<ResourceDecisionResult*>(player.Decide(game_state, Decision::RSC_YOP).release()));
+	if (yop_decision != nullptr && yop_decision->resources.size() == 2) {
+		for (const Resource& requested : yop_decision->resources) {
+			Bank::Request request(&player, requested, 1);
+			if (!bank.Process(request)) {
+				std::optional<Resource> alt_rsc = std::nullopt;
+				for (std::pair<const Resource, int>& rsc : bank.inventory) {
+					if (rsc.second > 0) {
+						alt_rsc.emplace(rsc.first);
+						break;
+					}
+				}
+				if (alt_rsc) {
+					Catan_IO::Debug("Resource not available, defaulting to " + RscToString(alt_rsc.value()));
+					Bank::Request new_req(&player, alt_rsc.value(), 1);
+					bank.Process(new_req);
+				}
+				else {
+					Catan_IO::Info("Bank is empty!");
+					return;
+				}
+			}
+		}
+	}
+	else {
+		Catan_IO::Debug("Invalid input, picking up two available resources.");
+		for (int i = 0; i < 2; ++i) {
+			std::optional<Resource> alt_rsc = std::nullopt;
+			for (std::pair<const Resource, int>& rsc : bank.inventory) {
+				if (rsc.second > 0) {
+					alt_rsc.emplace(rsc.first);
+					break;
+				}
+			}
+			if (alt_rsc) {
+				Bank::Request new_req(&player, alt_rsc.value(), 1);
+				bank.Process(new_req);
+			}
+			else {
+				Catan_IO::Info("Bank is empty!");
+				return;
+			}
+		}
+	}
+}
+
+void Game::Dev_Knight(Player& player) {
+	Catan_IO::Info(player.name + " is playing Knight");
+	std::unique_ptr<PositionDecisionResult>
+		robber_decision(dynamic_cast<PositionDecisionResult*>(player.Decide(game_state, Decision::POS_Robber).release()));
+	std::pair<int, int> new_robber_pos;
+	std::vector<Player*> adj_players;
+	if (robber_decision != nullptr && robber_decision->positions.size() > 0) {
+		new_robber_pos = robber_decision->positions[0];
+		std::optional<std::vector<Player*>> result;
+		if ((result = map.PlaceRobber(new_robber_pos)) == std::nullopt) {
+			if (new_robber_pos != std::pair<int, int>(0, 0)) {
+				new_robber_pos = std::pair<int, int>(0, 0);
+			}
+			else {
+				new_robber_pos = std::pair<int, int>(0, 1);
+			}
+			result = map.PlaceRobber(new_robber_pos);
+		}
+		adj_players = result.value();
+	}
+	std::vector<Player*> steal_options;
+	for (Player*& adj_player : adj_players) {
+		if (*adj_player != player && adj_player->GetResourceAmnt() > 0) {
+			steal_options.push_back(adj_player);
+		}
+	}
+	Player* victim = nullptr;
+	if (steal_options.size() == 1) {
+		victim = steal_options[0];
+	}
+	else {
+		Catan_IO::Info("Choose from following players to steal from:");
+		for (int opt_num = 0; opt_num < steal_options.size(); opt_num++) {
+			Catan_IO::Info("Option " + std::to_string(opt_num) + ": " + steal_options[opt_num]->name); // fix
+		}
+		std::unique_ptr<OptionDecisionResult>
+			steal_decision(dynamic_cast<OptionDecisionResult*>(player.Decide(game_state, Decision::OPT_Steal).release()));
+		if (steal_decision) {
+			victim = steal_options[std::clamp(static_cast<int>(steal_decision->option), 0, static_cast<int>(steal_options.size() - 1))];
+		}
+		else {
+			victim = steal_options[0];
+		}
+	}
+	std::discrete_distribution<> distr{ {
+			static_cast<double>(victim->resources[Resource::Lumber]),
+			static_cast<double>(victim->resources[Resource::Brick]),
+			static_cast<double>(victim->resources[Resource::Ore]),
+			static_cast<double>(victim->resources[Resource::Grain]),
+			static_cast<double>(victim->resources[Resource::Wool])
+	} };
+	int rsc_to_steal_int = distr(map.gen);
+	Resource rsc_to_steal;
+	switch (rsc_to_steal_int) {
+	case 0:
+		rsc_to_steal = Resource::Lumber;
+		break;
+	case 1:
+		rsc_to_steal = Resource::Brick;
+		break;
+	case 2:
+		rsc_to_steal = Resource::Ore;
+		break;
+	case 3:
+		rsc_to_steal = Resource::Grain;
+		break;
+	case 4:
+		rsc_to_steal = Resource::Wool;
+		break;
+	}
+	Catan_IO::Info(player.name + " stole a random resource from " + victim->name);
+	Catan_IO::Debug("Rsc stolen: " + RscToString(rsc_to_steal));
 }

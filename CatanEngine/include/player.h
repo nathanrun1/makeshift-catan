@@ -3,6 +3,7 @@
 #include <string>
 #include <memory>
 #include "resource.h"
+#include "devcard.h"
 #include "agent.h"
 
 //class DevCard;
@@ -19,7 +20,7 @@ public:
 	int victory_points = 0;
 	int army_size = 0;
 	int longest_road = 0;
-	//std::vector<DevCard> dev_cards;
+	std::vector<DevCard> dev_cards;
 	std::vector<std::shared_ptr<Occupation>> occupations;
 	std::unordered_map<Resource, int> discounts;
 	std::unordered_map<Resource, int> resources;
@@ -40,6 +41,11 @@ public:
 
 	Player();
 	Player(std::string name);
+
+	/// <summary>
+	/// Calculates the total amount of resources the player has
+	/// </summary>
+	int GetResourceAmnt();
 
 	std::unique_ptr<DecisionResult> Decide(GameState& game_state, Decision decision);
 };

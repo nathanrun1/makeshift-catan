@@ -5,6 +5,7 @@ bool Bank::Process(Request& request) {
 	if (inventory[request.resource] >= request.amount) {
 		inventory[request.resource] -= request.amount;
 		request.player->resources[request.resource] += request.amount;
+		Catan_IO::Info(request.player->name + " took " + std::to_string(request.amount) + " " + RscToString(request.resource) + " from bank.");
 		return true;
 	}
 	else {
@@ -21,6 +22,7 @@ bool Bank::ProcessMultiple(std::vector<Request>& requests) {
 	}
 	for (Request& request : requests) {
 		request.player->resources[request.resource] += request.amount;
+		Catan_IO::Info(request.player->name + " took " + std::to_string(request.amount) + " " + RscToString(request.resource) + " from bank.");
 	}
 	inventory = inv_copy;
 	return true;

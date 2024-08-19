@@ -143,10 +143,10 @@ int main() {
 
 	Game game;
 	game.GetPlayers();
+	game.SetupPhase();
 	game.players[0].resources[Resource::Lumber] = 3;
 	game.players[1].resources[Resource::Lumber] = 5;
-	game.Dev_Mono(game.players[2]);
-	std::cout << "lumber amnt for plr now: " << game.players[2].resources[Resource::Lumber] << "\n";
+	game.Dev_Knight(game.players[2]);
 
 	// next to do
 	// functionality for knight and YOP (include edge cases where no resources left in bank!

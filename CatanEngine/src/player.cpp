@@ -32,3 +32,11 @@ std::unique_ptr<DecisionResult> Player::Decide(GameState& game_state, Decision d
 	
 	return agent.Decide(plr_game_state, decision);
 }
+
+int Player::GetResourceAmnt() {
+	int total = 0;
+	for (std::pair<const Resource, int>& inv_pair : resources) {
+		total += inv_pair.second;
+	}
+	return total;
+}

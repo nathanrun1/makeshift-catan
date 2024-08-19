@@ -48,7 +48,7 @@ const std::unordered_map<Decision, std::string> decision_map_str = {
 	{Decision::TRD_Trade, "Pick a trade to offer to other players\nFormat: 'LBOGW|LBOGW' e.g. '20000|02000' -> Request 2 lumber, Give 2 brick"},
 	{Decision::OPT_TradeResponses, "Pick a trade to accept, or to accept none\n0: Accept none, [Trade #]: Accept corresponding trade"},
 	{Decision::POS_Robber, "Pick a robber location\nFormat: 'row col' e.g. '1 0'"},
-	{Decision::OPT_Steal, "Pick a player to steal from\n[Option #]: Steal from corresponding player"},
+	{Decision::OPT_Steal, "Pick a player to steal from\nFormat: [Option #]: Steal from corresponding player, e.g. '1' -> steal from Option 1"},
 	{Decision::RSC_Monopoly, "Pick a resource to steal from everyone\nL: Lumber, B: Brick, O: Ore, G: Grain, W: Wool"},
 	{Decision::RSC_YOP, "Pick two resources to take from bank\nFormat: '[Rsc1][Rsc2]' e.g. 'BO' -> Brick & Ore, 'LL' -> Lumber & Lumber"},
 	{Decision::RSC_Discard, "Pick resources to discard\nFormat: '[Rsc1][Rsc2]...[RscN]' e.g. 'LLBW' -> Lumber x2, Brick, Wool"},
