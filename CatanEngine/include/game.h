@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include <random>
+#include <set>
 #include <stack>
 #include <iostream>
 #include "map.h"
@@ -64,6 +65,7 @@ public: // temp
 
 	/// <summary>
 	/// Attempts to build a road for given player between two given nodes
+	/// If successful, updates longest road holder when applicable
 	/// </summary>
 	/// <returns>True if successful, false otherwise</returns>
 	bool BuildRoad(Player& player, std::pair<int, int> node_pos1, std::pair<int, int> node_pos2);
@@ -88,7 +90,33 @@ public: // temp
 	/// </summary>
 	void UpdateLargestArmy();
 
+	/// <summary>
+	/// Plays the robber for given player
+	/// Allows them to place robber on a new hex and steal a resource from a player adjacent to the chosen hex
+	/// </summary>
+	/// <param name="player"></param>
+	void PlayRobber(Player& player);
+
+	/// <summary>
+	/// Checks if given player can afford given cost
+	/// </summary>
+	/// <returns>True if player can afford, false if not</returns>
+	bool CanAfford(Player& player, const std::unordered_map<Resource, int>& cost);
+
+	/// <summary>
+	/// Removes given cost of resources from player inventory
+	/// Assumes player inventory can afford it.
+	/// </summary>
+	/// <param name="player"></param>
+	/// <param name="cost"></param>
+	void Purchase(Player& player, const std::unordered_map<Resource, int>& cost);
+
 	// DEVELOPMENT CARD FUNCTIONALITY:
+
+	/// <summary>
+	/// Plays a given dev card for given player. Does nothing with a DevCard::VictoryPoint
+	/// </summary>
+	void PlayDev(Player& player, DevCard dev_card);
 
 	/// <summary>
 	/// Plays a Road Builder dev card for given player
@@ -109,6 +137,7 @@ public: // temp
 
 	/// <summary>
 	/// Plays a Knight dev card for given player
+	/// Updates largest army holder when applicable
 	/// </summary>
 	/// <param name="player"></param>
 	void Dev_Knight(Player& player);
@@ -123,6 +152,10 @@ public:
 	
 	static const int MIN_ARMY_SIZE = 3; // Minimum army size for largest army
 	static const int MIN_ROAD_SIZE = 5; // MInimum road length for longest road
+	static const std::unordered_map<Resource, int> ROAD_COST;
+	static const std::unordered_map<Resource, int> SETTLE_COST;
+	static const std::unordered_map<Resource, int> CITY_COST;
+	static const std::unordered_map<Resource, int> DEV_COST;
 
 	/// <summary>
 	/// Constructs a Game instance

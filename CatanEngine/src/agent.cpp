@@ -5,7 +5,7 @@ std::unique_ptr<DecisionResult> Agent::Decide(GameState& game_state, Decision de
 		Catan_IO::Prompt(decision_map_str.at(decision));
 		switch (decision_map_type.at(decision)) {
 			case DecisionType::Option: {
-				int option;
+				int option = 0;
 				std::cin >> option;
 				std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 				return std::make_unique<OptionDecisionResult>(option);

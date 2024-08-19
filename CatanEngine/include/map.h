@@ -8,6 +8,7 @@
 #include "mapcomponents.h"
 #include "pair_hash.h"
 #include "devcard.h"
+#include "buildings.h"
 
 
 class Map {
@@ -67,6 +68,19 @@ private:
 	/// </summary>
 	/// <param name="node_pos">- Position of given node </param>
 	std::vector<Hex*> GetNodeHexes(std::pair<int, int> node_pos);
+
+	/// <summary>
+	/// Produces and returns a vector of pointers to all hexes that hold the given dice number
+	/// </summary>
+	/// <param name="dice_num">- Given dice number</param>
+	std::vector<Hex*> GetDiceHexes(int dice_num);
+
+	/// <summary>
+	/// Produces and returns a map of resource to pairs of players and amount of the resource 
+	/// they should get from a given dice roll
+	/// </summary>
+	/// <param name="dice_num">- Given dice roll number</param>
+	std::unordered_map<Resource, std::vector<std::unordered_map<Player*, int>>> GetResourceReqs(int dice_num);
 
 	/// <summary>
 	/// Produces a vector of pointers to all adjacent nodes to the Hex located at (row, col) in map.hex_grid

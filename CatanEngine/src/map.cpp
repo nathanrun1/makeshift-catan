@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <stack>
+#include <set>
 #include "map.h"
 
 #define LOG(x) std::cout << x << std::endl
@@ -273,16 +274,16 @@ std::vector<std::pair<Resource, int>> Map::GetResources(Occupation& occ) {
 
 std::optional<std::vector<Player*>> Map::PlaceRobber(std::pair<int, int> pos) {
 	if (robber_pos != pos && pos.first >= 0 && pos.first < hex_grid.size() 
-		&& pos.second >= 0 && pos.second << hex_grid[pos.first].size() && hex_grid[pos.first][pos.second]) {
+		&& pos.second >= 0 && pos.second < hex_grid[pos.first].size() && hex_grid[pos.first][pos.second]) {
 		robber_pos = pos;
-		std::vector<Player*> adj_players;
+		std::set<Player*> adj_players;
 		std::vector<Node*> adj_nodes = GetHexNodes(pos);
 		for (Node*& node : adj_nodes) {
 			if (node->occ) {
-				adj_players.push_back(node->occ->player);
+				adj_players.insert(node->occ->player);
 			}
 		}
-		return adj_players;
+		return std::vector<Player*>(adj_players.begin(), adj_players.end());
 	}
 	return std::nullopt;
 }
@@ -550,3 +551,16 @@ std::optional<std::pair<std::pair<int, int>, std::pair<int, int>>> Map::RoadGetR
 		return std::nullopt;
 	}
 }
+
+std::vector<Hex*> Map::GetDiceHexes(int dice_num) {
+	std::vector<Hex*> dice_hexes;
+	for (std::vector<std::optional<Hex>>& row : hex_grid) {
+		for (std::optional<Hex>& hex_opt : row) {
+			if (hex_opt != std::nullopt && hex_opt.value().dice_num == dice_num) {
+				dice_hexes.push_back(&hex_opt.value());
+			}
+		}
+	}
+	return dice_hexes;
+}
+

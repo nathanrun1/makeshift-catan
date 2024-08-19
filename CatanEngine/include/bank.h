@@ -31,9 +31,10 @@ public:
 	bool Process(Request& request);
 
 	/// <summary>
-	/// Determines if bank holds enough resources to fulfill requests. If so, subtracts requested resources
-	/// from bank and adds them to requests' players' inventory. If not, no requests are fulfilled and bank
-	/// remains unchanged.
+	/// Determines if bank holds enough resources to fulfill requests. Checks for eaach resource.
+	/// If enough of a resource to fulfill all requests of that resource, fulfills those.
+	/// If ever not enough of a resource to fulfill all requests of that resource, will not fulfill any
+	/// requests of that resource UNLESS only one player is requesting it.
 	/// </summary>
 	/// <returns>True if all requests fulfilled, false otherwise</returns>
 	bool ProcessMultiple(std::vector<Request>& requests);
