@@ -141,7 +141,7 @@ int main() {
 			<< " -> " << road.first->pos.first << " " << road.first->pos.second << "\n";
 	}*/
 
-	Game game;
+	
 	/*game.GetPlayers();
 	game.SetupPhase();
 	game.players[0].resources[Resource::Brick] = 3;
@@ -155,6 +155,9 @@ int main() {
 	// make sure that resource giving checks if robber is on hex (pre sure it does)
 	// program rest of game functionality including dev cards
 	// almost fucking done holy shit
-
+	Game game(1);
 	game.Start();
+
+	// NEXT TO TEST:
+	// longest road updates properly
 }

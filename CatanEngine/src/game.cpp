@@ -24,9 +24,9 @@ const std::unordered_map<Resource, int> Game::DEV_COST = {
 	{Resource::Ore, 1}
 };
 
+Game::Game(const unsigned int seed) : largest_army_plr(nullptr), longest_road_plr(nullptr), m_gen(seed), map(seed), game_state(std::bitset<32>()) {}
 
-Game::Game(int vp_to_win) : largest_army_plr(nullptr), longest_road_plr(nullptr), 
-vp_to_win(vp_to_win), m_gen(m_rd()), game_state(std::bitset<32>()) {}
+Game::Game() : largest_army_plr(nullptr), longest_road_plr(nullptr), m_gen(m_rd()), game_state(std::bitset<32>()) {}
 
 int Game::DiceRoll() {
 	std::uniform_int_distribution dist(1, 6);
@@ -36,7 +36,11 @@ int Game::DiceRoll() {
 
 void Game::GetPlayers() {
 	for (int i = 0; i < 4; ++i) {
-		players.push_back(Player("Player" + std::to_string(i + 1)));
+		Player new_plr("Player" + std::to_string(i + 1));
+		new_plr.settlements = std::max(PLAYER_SETTLEMENTS, 2); // need at least 2 settlements
+		new_plr.cities = PLAYER_CITIES;
+		new_plr.roads = PLAYER_ROADS;
+		players.push_back(new_plr);
 	}
 }
 
@@ -99,17 +103,21 @@ void Game::PlayerTurn(Player& player) {
 				int to_discard = rsc_amnt / 2;
 				Catan_IO::Info(p.name + ", you must discard " + std::to_string(to_discard) + " cards");
 				std::unique_ptr<ResourceDecisionResult>
-					discard_decision(dynamic_cast<ResourceDecisionResult*>(player.Decide(game_state, Decision::RSC_Discard).release()));
+					discard_decision(dynamic_cast<ResourceDecisionResult*>(p.Decide(game_state, Decision::RSC_Discard).release()));
 				int discarded = 0;
 				std::vector<Resource> rscs_to_discard = discard_decision->resources;
 				for (; discarded < std::min(to_discard, static_cast<int>(rscs_to_discard.size())); ++discarded) {
 					if (p.resources[rscs_to_discard[discarded]] > 0) {
 						p.resources[rscs_to_discard[discarded]] -= 1;
+						bank.inventory[rscs_to_discard[discarded]] += 1;
+						Catan_IO::Info(p.name + " gave 1 " + RscToString(rscs_to_discard[discarded]) + " to bank");
 					}
 					else {
 						for (std::pair<const Resource, int>& rsc_amnt_pair : p.resources) {
 							if (rsc_amnt_pair.second > 0) {
 								p.resources[rsc_amnt_pair.first] -= 1;
+								bank.inventory[rsc_amnt_pair.first] += 1;
+								Catan_IO::Info(p.name + " gave 1 " + RscToString(rsc_amnt_pair.first) + " to bank");
 								break;
 							}
 						}
@@ -120,6 +128,8 @@ void Game::PlayerTurn(Player& player) {
 					for (std::pair<const Resource, int>& rsc_amnt_pair : p.resources) {
 						if (rsc_amnt_pair.second > 0) {
 							p.resources[rsc_amnt_pair.first] -= 1;
+							bank.inventory[rsc_amnt_pair.first] += 1;
+							Catan_IO::Info(p.name + " gave 1 " + RscToString(rsc_amnt_pair.first) + " to bank");
 							break;
 						}
 					}
@@ -131,6 +141,7 @@ void Game::PlayerTurn(Player& player) {
 	// From player, listen for: Play Dev Card, Build Settlement, Build Road, Upgrade to City, Draw Dev Card, Trade
 	bool dev_played = false;
 	bool turn_over = false;
+	std::queue<DevCard> bought_devcards; // Dev cards bought during turn don't go into inv. until after turn
 	while (!turn_over) {
 		std::unique_ptr<OptionDecisionResult>
 			turn_action(dynamic_cast<OptionDecisionResult*>(player.Decide(game_state, Decision::OPT_Turn).release()));
@@ -146,7 +157,6 @@ void Game::PlayerTurn(Player& player) {
 		}
 		case 1: {
 			// Trade
-			// Add this and then game engine is done!!!
 			std::unique_ptr<TradeDecisionResult>
 				trade_decision(dynamic_cast<TradeDecisionResult*>(player.Decide(game_state, Decision::TRD_Trade).release()));
 			std::queue<std::pair<Player*, Trade>> trade_queue;
@@ -263,7 +273,7 @@ void Game::PlayerTurn(Player& player) {
 			else {
 				Catan_IO::Info("Trade is invalid");
 			}
-			if (player.victory_points > vp_to_win) {
+			if (player.victory_points >= VP_TO_WIN) {
 				Win(player);
 				return;
 			}
@@ -320,7 +330,7 @@ void Game::PlayerTurn(Player& player) {
 			else {
 				Catan_IO::Info("You can only play a dev card once per turn");
 			}
-			if (player.victory_points > vp_to_win) {
+			if (player.victory_points >= VP_TO_WIN) {
 				Win(player);
 				return;
 			}
@@ -331,13 +341,16 @@ void Game::PlayerTurn(Player& player) {
 			if (CanAfford(player, DEV_COST)) {
 				std::optional<DevCard> draw = map.DrawDevcard();
 				if (draw != std::nullopt) {
-					player.dev_cards.push_back(draw.value());
+					if (draw.value() == DevCard::VictoryPoint) {
+						player.dev_cards.push_back(draw.value());
+						player.victory_points += 1;
+					}
+					else {
+						bought_devcards.push(draw.value());
+					}
 					Catan_IO::Info(player.name + " drew a dev card");
 					Catan_IO::Debug("Dev card: " + devcard_str_map.at(draw.value()));
 					Purchase(player, DEV_COST);
-					if (draw.value() == DevCard::VictoryPoint) {
-						player.victory_points += 1;
-					}
 				}
 				else {
 					Catan_IO::Info("No dev cards left!");
@@ -346,7 +359,7 @@ void Game::PlayerTurn(Player& player) {
 			else {
 				Catan_IO::Info("You cannot afford to draw a dev card.");
 			}
-			if (player.victory_points > vp_to_win) {
+			if (player.victory_points >= VP_TO_WIN) {
 				Win(player);
 				return;
 			}
@@ -354,6 +367,10 @@ void Game::PlayerTurn(Player& player) {
 		}
 		case 4: {
 			// Build road
+			if (player.roads <= 0) {
+				Catan_IO::Info("You have no roads left!");
+				break;
+			}
 			if (CanAfford(player, ROAD_COST)) {
 				std::unique_ptr<PositionDecisionResult>
 					road_decision(dynamic_cast<PositionDecisionResult*>(player.Decide(game_state, Decision::POS_BuildRoad).release()));
@@ -374,7 +391,7 @@ void Game::PlayerTurn(Player& player) {
 			else {
 				Catan_IO::Info("You cannot afford to build a road");
 			}
-			if (player.victory_points > vp_to_win) {
+			if (player.victory_points >= VP_TO_WIN) {
 				Win(player);
 				return;
 			}
@@ -382,6 +399,10 @@ void Game::PlayerTurn(Player& player) {
 		}
 		case 5: {
 			// Settle
+			if (player.settlements <= 0) {
+				Catan_IO::Info("You have no settlements left!");
+				break;
+			}
 			if (CanAfford(player, SETTLE_COST)) {
 				std::unique_ptr<PositionDecisionResult>
 					settle_decision(dynamic_cast<PositionDecisionResult*>(player.Decide(game_state, Decision::POS_Settle).release()));
@@ -402,7 +423,7 @@ void Game::PlayerTurn(Player& player) {
 			else {
 				Catan_IO::Info("You cannot afford to build a settlement");
 			}
-			if (player.victory_points > vp_to_win) {
+			if (player.victory_points >= VP_TO_WIN) {
 				Win(player);
 				return;
 			}
@@ -410,6 +431,10 @@ void Game::PlayerTurn(Player& player) {
 		}
 		case 6: {
 			// City
+			if (player.cities <= 0) {
+				Catan_IO::Info("You have no cities left!");
+				break;
+			}
 			if (CanAfford(player, CITY_COST)) {
 				std::unique_ptr<PositionDecisionResult>
 					city_decision(dynamic_cast<PositionDecisionResult*>(player.Decide(game_state, Decision::POS_City).release()));
@@ -423,7 +448,7 @@ void Game::PlayerTurn(Player& player) {
 			else {
 				Catan_IO::Info("You cannot afford to build a city");
 			}
-			if (player.victory_points > vp_to_win) {
+			if (player.victory_points >= VP_TO_WIN) {
 				Win(player);
 				return;
 			}
@@ -432,15 +457,63 @@ void Game::PlayerTurn(Player& player) {
 		case 7: {
 			// Bank Trade
 
-			// Prompt for trade decision with bank
-			// If: trade matches player's discounts, is a valid bank trade and bank has enough resources:
-			// Run the trade with the bank
-
-			// To check if matches discounts, just match up the ratio of each discount with each resource in the trade with
-			// the amount of resources requested from bank
-			// If its an exact match, then ok, otherwise its invalid
+			std::unique_ptr<TradeDecisionResult>
+				bank_trade_decision(dynamic_cast<TradeDecisionResult*>(player.Decide(game_state, Decision::TRD_TradeBank).release()));
+			if (bank_trade_decision) {
+				Trade bank_trade(bank_trade_decision->offer, bank_trade_decision->request);
+				int offer_value = 0;
+				bool bank_trade_valid = bank_trade.is_valid() && CanAfford(player, bank_trade.offer);
+				if (bank_trade_valid) {
+					for (const std::pair<Resource, int>& offered : bank_trade.offer) {
+						if (offered.second > 0) {
+							if (offered.second % player.discounts[offered.first] != 0) {
+								bank_trade_valid = false;
+								break;
+							}
+							offer_value += offered.second / player.discounts[offered.first];
+						}
+					}
+				}
+				if (bank_trade_valid) {
+					for (const std::pair<Resource, int>& requested : bank_trade.request) {
+						if (requested.second > 0) {
+							if (bank.inventory[requested.first] < requested.second) {
+								Catan_IO::Info("Not enough " + RscToString(requested.first) + " in bank for this trade.");
+								offer_value = -1;
+								break;
+							}
+							offer_value -= requested.second;
+						}
+					}
+					if (offer_value == 0) {
+						// Bank trade is fully valid
+						for (const std::pair<Resource, int>& offered : bank_trade.offer) {
+							if (offered.second > 0) {
+								bank.inventory[offered.first] += offered.second;
+								player.resources[offered.first] -= offered.second;
+								Catan_IO::Info(player.name + " gave " + std::to_string(offered.second) + " " + RscToString(offered.first) + " to bank.");
+							}
+						}
+						for (const std::pair<Resource, int>& requested : bank_trade.request) {
+							if (requested.second > 0) {
+								bank.inventory[requested.first] -= requested.second;
+								player.resources[requested.first] += requested.second;
+								Catan_IO::Info(player.name + " took " + std::to_string(requested.second) + " " + RscToString(requested.first) + " from bank.");
+							}
+						}
+					}
+				}
+				else {
+					Catan_IO::Info("Bank trade invalid");
+				}
+			}
 		}
 		}
+	}
+	while (!bought_devcards.empty()) {
+		// Add all dev cards bought during turn into inventory
+		player.dev_cards.push_back(bought_devcards.front());
+		bought_devcards.pop();
 	}
 }
 
@@ -450,7 +523,7 @@ void Game::Start() {
 	while (true) {
 		for (Player& player : players) {
 			PlayerTurn(player);
-			if (player.victory_points >= vp_to_win) {
+			if (player.victory_points >= VP_TO_WIN) {
 				Win(player);
 				return;
 			}
@@ -463,12 +536,18 @@ void Game::Win(Player& player) {
 }
 
 bool Game::BuildSettlement(Player& player, std::pair<int, int> pos, bool is_initial) {
-	if (pos.first >= 0 && pos.first < map.node_grid.size() && pos.second >= 0 && pos.second < map.node_grid[pos.first].size()) {
+	if (player.settlements <= 0) {
+		return false;
+	}
+	if (pos.first >= 0 && pos.first < map.node_grid.size() && pos.second >= 0 && pos.second < map.node_grid[pos.first].size() && 
+		map.node_grid[pos.first][pos.second] != std::nullopt) {
 		std::shared_ptr<Settlement> new_settle = std::make_shared<Settlement>(&player, &(map.node_grid[pos.first][pos.second].value()));
 		if (map.PlaceOcc(new_settle, !is_initial)) {
 			player.victory_points += 1;
 			Catan_IO::Info(player.name + " built settlement at (" + std::to_string(pos.first) + "," + std::to_string(pos.second)
 				+ ")! +1 VPs");
+			player.settlements -= 1;
+			UpdateLongestRoad();
 			return true;
 		}
 	}
@@ -478,12 +557,18 @@ bool Game::BuildSettlement(Player& player, std::pair<int, int> pos, bool is_init
 }
 
 bool Game::BuildCity(Player& player, std::pair<int, int> pos) {
-	if (pos.first >= 0 && pos.first < map.node_grid.size() && pos.second >= 0 && pos.second < map.node_grid[pos.first].size()) {
+	if (player.cities <= 0) {
+		return false;
+	}
+	if (pos.first >= 0 && pos.first < map.node_grid.size() && pos.second >= 0 && pos.second < map.node_grid[pos.first].size() &&
+		map.node_grid[pos.first][pos.second] != std::nullopt) {
 		std::shared_ptr<City> new_city = std::make_shared<City>(&player, &(map.node_grid[pos.first][pos.second].value()));
 		if (map.ReplaceOcc(new_city)) {
 			player.victory_points += 1;
 			Catan_IO::Info(player.name + " built city at (" + std::to_string(pos.first) + "," + std::to_string(pos.second)
 				+ ")! +1 VPs");
+			player.cities -= 1;
+			player.settlements += 1;
 			return true;
 		}
 	}
@@ -491,10 +576,14 @@ bool Game::BuildCity(Player& player, std::pair<int, int> pos) {
 }
 
 bool Game::BuildRoad(Player& player, std::pair<int, int> node_pos1, std::pair<int, int> node_pos2) {
+	if (player.roads <= 0) {
+		return false;
+	}
 	if (map.PlaceRoad(player, node_pos1, node_pos2)) {
 		Catan_IO::Info(player.name + " built road from (" + std::to_string(node_pos1.first) + "," + std::to_string(node_pos1.second)
 			+ ") to (" + std::to_string(node_pos2.first) + "," + std::to_string(node_pos2.second) + ")!");
-		if (longest_road_plr != nullptr && player.longest_road > longest_road_plr->longest_road) {
+		player.roads -= 1;
+		if ((longest_road_plr == nullptr && player.longest_road >= MIN_ROAD_SIZE) || (longest_road_plr != nullptr && player.longest_road > longest_road_plr->longest_road)) {
 			UpdateLongestRoad();
 		}
 		return true;
@@ -507,6 +596,14 @@ bool Game::BuildRoad(Player& player, std::pair<int, int> node_pos1, std::pair<in
 void Game::UpdateLongestRoad() {
 	Player* longest_road_holder = longest_road_plr;
 	int longest_road = longest_road_holder ? longest_road_holder->longest_road : MIN_ROAD_SIZE - 1;
+	if (longest_road_holder && longest_road < MIN_ROAD_SIZE) {
+		Catan_IO::Info(longest_road_plr->name + " has lost longest road! -2 VPs");
+		// Longest road holder's road went below minimum length (due to settlement cut off)
+		longest_road_holder->victory_points -= 2;
+		longest_road_plr = nullptr;
+		longest_road_holder = nullptr;
+		longest_road = MIN_ROAD_SIZE - 1;
+	}
 	for (Player& player : players) {
 		if ((!longest_road_plr || player != *longest_road_plr) && player.longest_road > longest_road) {
 			longest_road_holder = &player;
@@ -631,7 +728,7 @@ void Game::Dev_Knight(Player& player) {
 	Catan_IO::Info(player.name + " is playing Knight");
 	PlayRobber(player);
 	player.army_size += 1;
-	if (largest_army_plr != nullptr && player.army_size > largest_army_plr->army_size) {
+	if ((largest_army_plr != nullptr && player.army_size > largest_army_plr->army_size) || (largest_army_plr == nullptr && player.army_size >= MIN_ARMY_SIZE)) {
 		UpdateLargestArmy();
 	}
 }
@@ -662,7 +759,7 @@ void Game::PlayRobber(Player& player) {
 	if (robber_decision != nullptr && robber_decision->positions.size() > 0) {
 		new_robber_pos = robber_decision->positions[0];
 		if ((result = map.PlaceRobber(new_robber_pos)) == std::nullopt) {
-			if (new_robber_pos != std::pair<int, int>(0, 0)) {
+			if (map.robber_pos != std::pair<int, int>(0, 0)) {
 				new_robber_pos = std::pair<int, int>(0, 0);
 			}
 			else {
@@ -754,6 +851,7 @@ bool Game::CanAfford(Player& player, const std::unordered_map<Resource, int>& co
 void Game::Purchase(Player& player, const std::unordered_map<Resource, int>& cost) {
 	for (const std::pair<const Resource, int>& rsc_cost : cost) {
 		player.resources[rsc_cost.first] -= rsc_cost.second;
+		bank.inventory[rsc_cost.first] += rsc_cost.second;
 		Catan_IO::Info(player.name + " gave " + std::to_string(rsc_cost.second) + " " + RscToString(rsc_cost.first) + " to bank");
 	}
 }

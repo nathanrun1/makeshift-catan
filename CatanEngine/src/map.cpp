@@ -137,9 +137,10 @@ void Map::GenerateNodes(int top_row_len, int mid_row_len) {
 }
 
 void Map::Generate(int top_row_len, int mid_row_len) {
-	Map::GenerateHexes(top_row_len, mid_row_len);
-	Map::GenerateNodes(top_row_len, mid_row_len);
-	Map::GeneratePorts();
+	GenerateHexes(top_row_len, mid_row_len);
+	GenerateNodes(top_row_len, mid_row_len);
+	GeneratePorts();
+	ShuffleDevcards();
 }
 
 std::vector<Hex*> Map::GetNodeHexes(std::pair<int, int> node_pos) {
@@ -307,7 +308,6 @@ bool Map::PlaceOcc(std::shared_ptr<Occupation> occ, bool needs_road) {
 		for (std::pair<Node*, Player*>& road : roads.at(&node)) {
 			if (*(road.second) == *occ->player) {
 				has_road = true;
-				break;
 			}
 		}
 		if (!has_road) {
@@ -320,6 +320,15 @@ bool Map::PlaceOcc(std::shared_ptr<Occupation> occ, bool needs_road) {
 		std::vector<std::pair<Resource, int>>& discounts = port_map[node.pos];
 		for (std::pair<Resource, int>& discount : discounts) {
 			occ->player->discounts[discount.first] = discount.second;
+		}
+	}
+	if (roads.find(&node) != roads.end()) {
+		for (std::pair<Node*, Player*>& road : roads.at(&node)) {
+			if (*(road.second) != *occ->player) {
+				road.second->longest_road = GetLongestRoad(*road.second);
+				// Recalculate longest road of any players who also have road attached to this settlement spot
+				//   due to possibility of a road being cut off.
+			}
 		}
 	}
 	return true;
@@ -401,9 +410,12 @@ int Map::GetLongestRoad(Player& player) {
 				longest_road = cur.second;
 			}
 			std::vector<std::pair<Node*, Player*>>& node_roads = roads[cur.first];
-			for (std::pair<Node*, Player*>& road : node_roads) {
-				if (*road.second == player && visited.find(road.first) == visited.end()) {
-					to_visit.push({ road.first, cur.second + 1 });
+			if (!(cur.first->occ && *cur.first->occ->player != player && cur.first != root)) { 
+				// only branch off of this node if it is not owned by other player (unless is current root), i.e. don't count roads cut off by opponent settlements
+				for (std::pair<Node*, Player*>& road : node_roads) {
+					if (*road.second == player && visited.find(road.first) == visited.end()) {
+						to_visit.push({ road.first, cur.second + 1 });
+					}
 				}
 			}
 		}

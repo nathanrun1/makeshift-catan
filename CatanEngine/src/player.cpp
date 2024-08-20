@@ -7,7 +7,7 @@ Player::Player() : id(player_count), name("Player") {
 	player_count++;
 	for (const Resource& rsc : RESOURCES) {
 		discounts[rsc] = 4;
-		resources[rsc] = 0;
+		resources[rsc] = 10;
 	}
 }
 

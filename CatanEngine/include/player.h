@@ -25,6 +25,10 @@ public:
 	std::unordered_map<Resource, int> discounts;
 	std::unordered_map<Resource, int> resources;
 
+	int settlements = 5;
+	int cities = 4;
+	int roads = 15;
+
 	/// <summary>
 	/// Compares equality of two players. Equality is determined by Player.id
 	/// </summary>

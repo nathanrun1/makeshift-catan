@@ -151,21 +151,28 @@ public:
 	Player* longest_road_plr;
 	Player* largest_army_plr;
 
-	const int vp_to_win;
-	
+	static const int VP_TO_WIN = 3;
 	static const int MIN_ARMY_SIZE = 3; // Minimum army size for largest army
 	static const int MIN_ROAD_SIZE = 5; // MInimum road length for longest road
 	static const int MIN_CARDS_DISCARD = 8;
+	static const int PLAYER_SETTLEMENTS = 5;
+	static const int PLAYER_CITIES = 4;
+	static const int PLAYER_ROADS = 15;
 	static const std::unordered_map<Resource, int> ROAD_COST;
 	static const std::unordered_map<Resource, int> SETTLE_COST;
 	static const std::unordered_map<Resource, int> CITY_COST;
 	static const std::unordered_map<Resource, int> DEV_COST;
 
 	/// <summary>
+	/// Constructs a Game instance with given seed
+	/// </summary>
+	/// <param name="seed">- Seed to use for the game map generation and randomizing rolls</param>
+	Game(const unsigned int seed);
+
+	/// <summary>
 	/// Constructs a Game instance
 	/// </summary>
-	/// <param name="vp_to_win">- Amount of victory points to win the game. Default is 10.</param>
-	Game(int vp_to_win = 10);
+	Game();
 
 	/// <summary>
 	/// Rolls a 2d6

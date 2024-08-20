@@ -42,8 +42,7 @@ bool Bank::ProcessMultiple(std::vector<Request>& requests) {
 				inventory[cumulative_rsc_request.first] = 0;
 			}
 			else {
-				Catan_IO::Info("Not enough " + RscToString(cumulative_rsc_request.first) + " in bank. Nobody got any");
-				
+				Catan_IO::Info("Not enough " + RscToString(cumulative_rsc_request.first) + " in bank.");
 			}
 			all_fulfilled = false;
 		}
