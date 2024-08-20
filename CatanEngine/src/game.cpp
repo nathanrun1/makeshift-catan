@@ -110,6 +110,7 @@ void Game::PlayerTurn(Player& player) {
 						for (std::pair<const Resource, int>& rsc_amnt_pair : p.resources) {
 							if (rsc_amnt_pair.second > 0) {
 								p.resources[rsc_amnt_pair.first] -= 1;
+								break;
 							}
 						}
 					}
@@ -119,6 +120,7 @@ void Game::PlayerTurn(Player& player) {
 					for (std::pair<const Resource, int>& rsc_amnt_pair : p.resources) {
 						if (rsc_amnt_pair.second > 0) {
 							p.resources[rsc_amnt_pair.first] -= 1;
+							break;
 						}
 					}
 				}
@@ -137,19 +139,137 @@ void Game::PlayerTurn(Player& player) {
 			turn_action_choice = turn_action->option;
 		}
 		switch (turn_action_choice) {
-		case 0:
+		case 0: {
 			// Pass
 			turn_over = true;
 			break;
-		case 1:
+		}
+		case 1: {
 			// Trade
 			// Add this and then game engine is done!!!
+			std::unique_ptr<TradeDecisionResult>
+				trade_decision(dynamic_cast<TradeDecisionResult*>(player.Decide(game_state, Decision::TRD_Trade).release()));
+			std::queue<std::pair<Player*, Trade>> trade_queue;
+			if (trade_decision) {
+				Trade trade(trade_decision->offer, trade_decision->request);
+				if (trade.is_valid() && CanAfford(player, trade.offer)) {
+					std::unordered_map<Player*, Trade> accepted_trades;
+					std::unordered_set<Trade> requested_trades;
+					trade_queue.emplace(&player, trade);
+					requested_trades.insert(trade);
+					while (!trade_queue.empty()) {
+						const std::pair<Player*, Trade> cur = trade_queue.front();
+						trade_queue.pop();
+						if (cur.first == &player) {
+							Catan_IO::Info(cur.first->name + " is requesting a trade:\n" + static_cast<std::string>(cur.second));
+						}
+						else {
+							Catan_IO::Info(cur.first->name + " has made a counter offer:\n" + static_cast<std::string>(cur.second));
+						}
+						for (Player& opponent : players) {
+							if (opponent != player && opponent != *cur.first) {
+								std::unique_ptr<OptionDecisionResult>
+									trade_response_decision(dynamic_cast<OptionDecisionResult*>(
+										opponent.Decide(game_state, player == *cur.first ? Decision::OPT_TradeRespond : Decision::OPT_TradeRespondCounter).release()));
+								int response = 0;
+								if (trade_response_decision) {
+									response = trade_response_decision->option;
+								}
+								switch (response) {
+								case 0: {
+									// Decline
+									break;
+								}
+								case 1: {
+									// Accept
+									if (CanAfford(opponent, cur.second.request)) {
+										Catan_IO::Info(opponent.name + " has accepted the trade");
+										accepted_trades[&opponent] = cur.second;
+									}
+									else {
+										Catan_IO::Info("You cannot afford to accept this trade (Auto Declined)");
+									}
+									break;
+								}
+								case 2: {
+									// Counter
+									std::unique_ptr<TradeDecisionResult>
+										counter_trade_decision(dynamic_cast<TradeDecisionResult*>(opponent.Decide(game_state, Decision::TRD_TradeCounter).release()));
+									if (counter_trade_decision) {
+										Trade counter_trade(counter_trade_decision->request, counter_trade_decision->offer);
+										if (counter_trade.is_valid() && CanAfford(opponent, counter_trade.request)) {
+											Catan_IO::Info(opponent.name + " has initiated a counter trade");
+											accepted_trades[&opponent] = counter_trade;
+											trade_queue.emplace(&opponent, counter_trade);
+											requested_trades.insert(counter_trade);
+										}
+										else {
+											Catan_IO::Info("Counter trade is invalid (Auto Declined)");
+										}
+									}
+									break;
+								}
+								}
+							}
+						}
+					}
+					Catan_IO::Info("All responses received, options:");
+					std::vector<std::pair<Player* const, Trade>> accepted_trades_vec;
+					int option_cnt = 1;
+					for (std::pair<Player* const, Trade>& plr_trade_pair : accepted_trades) {
+						if (CanAfford(player, plr_trade_pair.second.offer)) {
+							accepted_trades_vec.emplace_back(plr_trade_pair.first, plr_trade_pair.second);
+							Catan_IO::Info("Option " + std::to_string(option_cnt) + ": " + plr_trade_pair.first->name +
+								" accepts:\n" + static_cast<std::string>(plr_trade_pair.second));
+							++option_cnt;
+						}
+					}
+					std::unique_ptr<OptionDecisionResult>
+						trade_responses_decision(dynamic_cast<OptionDecisionResult*>(player.Decide(game_state, Decision::OPT_TradeResponses).release()));
+					int trade_responses_choice = 0;
+					if (trade_responses_decision) {
+						trade_responses_choice = trade_responses_decision->option;
+					}
+					switch (trade_responses_choice) {
+					case 0:
+						Catan_IO::Info(player.name + " chose not to finalize any trades");
+						break;
+					default:
+						trade_responses_choice = std::clamp(trade_responses_choice, 1, static_cast<int>(accepted_trades_vec.size()));
+						std::pair<Player* const, Trade> choice = accepted_trades_vec[trade_responses_choice - 1];
+						for (std::pair<const Resource, int>& offered : choice.second.offer) {
+							if (offered.second > 0) {
+								player.resources[offered.first] -= offered.second;
+								choice.first->resources[offered.first] += offered.second;
+								Catan_IO::Info(player.name + " gave " + std::to_string(offered.second) +
+									" " + RscToString(offered.first) + " to " + choice.first->name);
+							}
+						}
+						for (std::pair<const Resource, int>& requested : choice.second.request) {
+							if (requested.second > 0) {
+								player.resources[requested.first] += requested.second;
+								choice.first->resources[requested.first] -= requested.second;
+								Catan_IO::Info(player.name + " took " + std::to_string(requested.second) +
+									" " + RscToString(requested.first) + " from " + choice.first->name);
+							}
+						}
+						break;
+					}
+				}
+				else {
+					Catan_IO::Info("Trade is invalid");
+				}
+			} 
+			else {
+				Catan_IO::Info("Trade is invalid");
+			}
 			if (player.victory_points > vp_to_win) {
 				Win(player);
 				return;
 			}
 			break;
-		case 2:
+		}
+		case 2: {
 			// Play Dev Card
 			if (!dev_played) {
 				std::unique_ptr<OptionDecisionResult>
@@ -205,7 +325,8 @@ void Game::PlayerTurn(Player& player) {
 				return;
 			}
 			break;
-		case 3:
+		}
+		case 3: {
 			// Draw Dev Card
 			if (CanAfford(player, DEV_COST)) {
 				std::optional<DevCard> draw = map.DrawDevcard();
@@ -230,7 +351,8 @@ void Game::PlayerTurn(Player& player) {
 				return;
 			}
 			break;
-		case 4:
+		}
+		case 4: {
 			// Build road
 			if (CanAfford(player, ROAD_COST)) {
 				std::unique_ptr<PositionDecisionResult>
@@ -257,7 +379,8 @@ void Game::PlayerTurn(Player& player) {
 				return;
 			}
 			break;
-		case 5:
+		}
+		case 5: {
 			// Settle
 			if (CanAfford(player, SETTLE_COST)) {
 				std::unique_ptr<PositionDecisionResult>
@@ -284,7 +407,8 @@ void Game::PlayerTurn(Player& player) {
 				return;
 			}
 			break;
-		case 6:
+		}
+		case 6: {
 			// City
 			if (CanAfford(player, CITY_COST)) {
 				std::unique_ptr<PositionDecisionResult>
@@ -304,6 +428,18 @@ void Game::PlayerTurn(Player& player) {
 				return;
 			}
 			break;
+		}
+		case 7: {
+			// Bank Trade
+
+			// Prompt for trade decision with bank
+			// If: trade matches player's discounts, is a valid bank trade and bank has enough resources:
+			// Run the trade with the bank
+
+			// To check if matches discounts, just match up the ratio of each discount with each resource in the trade with
+			// the amount of resources requested from bank
+			// If its an exact match, then ok, otherwise its invalid
+		}
 		}
 	}
 }

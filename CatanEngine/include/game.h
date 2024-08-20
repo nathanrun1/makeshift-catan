@@ -4,7 +4,9 @@
 #include <memory>
 #include <random>
 #include <set>
+#include <unordered_set>
 #include <stack>
+#include <queue>
 #include <iostream>
 #include "map.h"
 #include "player.h"
@@ -12,6 +14,7 @@
 #include "buildings.h"
 #include "agent.h"
 #include "gamestate.h"
+#include "trade.h"
 
 class Player;
 

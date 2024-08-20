@@ -165,6 +165,7 @@
     <ClCompile Include="src\resource.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\map.cpp" />
+    <ClCompile Include="src\trade.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\agent.h" />
@@ -174,6 +175,7 @@
     <ClInclude Include="include\game.h" />
     <ClInclude Include="include\gamestate.h" />
     <ClInclude Include="include\catan_io.h" />
+    <ClInclude Include="include\hash_unordered_map.h" />
     <ClInclude Include="include\mapcomponents.h" />
     <ClInclude Include="include\occupation.h" />
     <ClInclude Include="include\pair_hash.h" />
@@ -181,6 +183,7 @@
     <ClInclude Include="include\bank.h" />
     <ClInclude Include="include\map.h" />
     <ClInclude Include="include\resource.h" />
+    <ClInclude Include="include\trade.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

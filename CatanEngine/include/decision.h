@@ -14,7 +14,8 @@ enum class Decision {
 	POS_City, // Pick a location to upgrade to city
 	OPT_PlayDev, // Pick a dev card (from inventory) to play
 	             // 0: knight, 1: YOP, 2: road builder, 3: monopoly
-	TRD_Trade, // Pick a trade 
+	TRD_Trade, // Pick a trade to initiate with other players
+	TRD_TradeBank, // Pick a trade to initiate with bank
 	OPT_TradeResponses, // Pick, from all available trades, to take one or not to take any (including counteroffers)
 	POS_Robber, // Pick which hex to place the robber
 	OPT_Steal, // Pick which player (out of those available) to steal a resource from after robber the adj. hex
@@ -40,12 +41,13 @@ enum class DecisionType {
 
 const std::unordered_map<Decision, std::string> decision_map_str = {
 	{Decision::OPT_PreDice, "Pick Pre-Diceroll action\n0: Roll Dice, 1: Play a dev card"},
-	{Decision::OPT_Turn, "Pick a turn action\n0: Pass, 1: Trade, 2: Play a dev card, 3: Draw a dev card, 4: Build a road, 5: Settle, 6: City"},
+	{Decision::OPT_Turn, "Pick a turn action\n0: Pass, 1: Trade, 2: Play a dev card, 3: Draw a dev card, 4: Build a road, 5: Settle, 6: City, 7: Trade with Bank"},
 	{Decision::POS_BuildRoad, "Pick a road location\nFormat: 'row col row col' e.g. '2 11 2 12' -> Road from node at 2,11 to node at 2,12"},
 	{Decision::POS_Settle, "Pick a settlement location\nFormat: 'row col' e.g. '1 0'"},
 	{Decision::POS_City, "Pick a city location\nFormat: 'row col' e.g. '1 0'"},
 	{Decision::OPT_PlayDev, "Pick a dev card to play from inventory\n0: Knight, 1: Year of Plenty, 2: Road Builder, 3: Monopoly"},
-	{Decision::TRD_Trade, "Pick a trade to offer to other players\nFormat: 'LBOGW|LBOGW' e.g. '20000|02000' -> Request 2 lumber, Give 2 brick"},
+	{Decision::TRD_Trade, "Pick a trade to offer to other players\nFormat: 'LBOGW|LBOGW' e.g. '20000|02000' -> Request 2 lumber, Offer 2 brick"},
+	{Decision::TRD_TradeBank, "Pick a trade to initiate with the bank\nFormat: 'LBOGW|LBOGW' e.g. '02000|40040' -> Give bank 4 lumber and 4 grain for 2 brick"},
 	{Decision::OPT_TradeResponses, "Pick a trade to accept, or to accept none\n0: Accept none, [Trade #]: Accept corresponding trade"},
 	{Decision::POS_Robber, "Pick a robber location\nFormat: 'row col' e.g. '1 0'"},
 	{Decision::OPT_Steal, "Pick a player to steal from\nFormat: [Option #]: Steal from corresponding player, e.g. '1' -> steal from Option 1"},
@@ -55,7 +57,7 @@ const std::unordered_map<Decision, std::string> decision_map_str = {
 	{Decision::POS_IniSettle, "Pick a settlement location\nFormat: 'row col' e.g. '1 0'"},
 	{Decision::POS_IniRoad, "Pick a road location\nFormat: 'row col row col' e.g. '2 11 2 12' -> Road from node at 2,11 to node at 2,12"},
 	{Decision::OPT_TradeRespond, "Pick a response to the trade\n0: Decline, 1: Accept, 2: Counter Offer"},
-	{Decision::TRD_TradeCounter, "Pick a counteroffer trade\nFormat: 'LBOGW|LBOGW' e.g. '20000|02000' -> Request 2 lumber, Give 2 brick"},
+	{Decision::TRD_TradeCounter, "Pick a counteroffer trade to the acting player\nFormat: 'LBOGW|LBOGW' e.g. '20000|02000' -> Request 2 lumber, Offer 2 brick"},
 	{Decision::OPT_TradeRespondCounter, "Pick a response to the counter offer\n0: Decline, 1: Accept, 2: Counter offer"}
 };
 
@@ -67,6 +69,7 @@ const std::unordered_map<Decision, DecisionType> decision_map_type = {
 	{Decision::POS_City, DecisionType::Position},
 	{Decision::OPT_PlayDev, DecisionType::Option},
 	{Decision::TRD_Trade, DecisionType::Trade},
+	{Decision::TRD_TradeBank, DecisionType::Trade},
 	{Decision::OPT_TradeResponses, DecisionType::Option},
 	{Decision::POS_Robber, DecisionType::Position},
 	{Decision::OPT_Steal, DecisionType::Option},
