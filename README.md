@@ -1,4 +1,6 @@
-Was playing Catan, had an idea for a project where I could learn both RL and C++.  This is my first time using C++.
+Was playing Catan, had an idea for a project where I could learn both RL and C++. 
+
+This is my first time coding with C++ and was done as a learning experience.
 
 The project: Make a Catan game environment, and then use it to train an RL agent to play Catan against 1,2 or 3 other players.
 The Catan game environment will be made using C++ and the standard library alone (no shortcuts for max learning).
