@@ -10,3 +10,11 @@ Progress:
 - Currently learning RL online through the Stanford RL lecture youtube videos. Once I feel that my understanding is sufficient, I'll start working on the RL part.
 
 
+
+
+https://github.com/user-attachments/assets/04c84f97-f587-4fe3-b5c1-615fb53e66d2
+
+
+
+https://github.com/user-attachments/assets/737a6c6c-5a48-4ad2-9fd3-9c5f13c3fde7
+
